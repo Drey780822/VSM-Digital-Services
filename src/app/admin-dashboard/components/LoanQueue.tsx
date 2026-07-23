@@ -1,15 +1,8 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CheckCircle, XCircle, Eye, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
-
-const LOANS = [
-  { id: 'ln-041', applicant: 'Sibusiso Mahlangu', amount: 'R 8,900', purpose: 'Cinematic Package', applied: '26 May 2026', salary: 'R 18,500', risk: 'Low' },
-  { id: 'ln-042', applicant: 'Palesa Dlamini', amount: 'R 4,500', purpose: 'Essential Package', applied: '27 May 2026', salary: 'R 12,000', risk: 'Low' },
-  { id: 'ln-043', applicant: 'Thabo Nkosi', amount: 'R 25,000', purpose: 'Personal Loan', applied: '27 May 2026', salary: 'R 22,000', risk: 'Medium' },
-  { id: 'ln-044', applicant: 'Refilwe Molefe', amount: 'R 14,500', purpose: 'Legacy Package', applied: '28 May 2026', salary: 'R 28,000', risk: 'Low' },
-  { id: 'ln-045', applicant: 'Lungelo Zulu', amount: 'R 35,000', purpose: 'Personal Loan', applied: '28 May 2026', salary: 'R 19,000', risk: 'High' },
-];
+import { getLoanApplications, type LoanApplicationRecord } from '@/lib/owner-ops';
 
 const RISK_STYLES: Record<string, string> = {
   Low: 'text-success bg-success/10 border-success/30',
@@ -18,7 +11,11 @@ const RISK_STYLES: Record<string, string> = {
 };
 
 export default function LoanQueue() {
-  const [loans, setLoans] = useState(LOANS);
+  const [loans, setLoans] = useState<LoanApplicationRecord[]>([]);
+
+  useEffect(() => {
+    getLoanApplications().then(setLoans);
+  }, []);
 
   const approve = (id: string, name: string) => {
     setLoans((prev) => prev.filter((l) => l.id !== id));
@@ -49,20 +46,34 @@ export default function LoanQueue() {
           </div>
         ) : (
           loans.map((loan) => (
-            <div key={loan.id} className="p-4 hover:bg-muted/30 transition-colors duration-150 group">
+            <div
+              key={loan.id}
+              className="p-4 hover:bg-muted/30 transition-colors duration-150 group"
+            >
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-foreground flex-shrink-0">
-                    {loan.applicant.split(' ').map((n) => n[0]).join('')}
+                    {loan.applicant
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')}
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-semibold text-foreground truncate">{loan.applicant}</div>
-                    <div className="text-[10px] text-foreground-muted">{loan.id} · {loan.applied}</div>
+                    <div className="text-xs font-semibold text-foreground truncate">
+                      {loan.applicant}
+                    </div>
+                    <div className="text-[10px] text-foreground-muted">
+                      {loan.id} · {loan.applied}
+                    </div>
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <div className="text-sm font-semibold text-foreground counter-value">{loan.amount}</div>
-                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${RISK_STYLES[loan.risk]}`}>
+                  <div className="text-sm font-semibold text-foreground counter-value">
+                    R {loan.amount.toLocaleString()}
+                  </div>
+                  <span
+                    className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${RISK_STYLES[loan.risk]}`}
+                  >
                     {loan.risk === 'High' && <AlertTriangle size={8} className="inline mr-0.5" />}
                     {loan.risk} Risk
                   </span>
@@ -70,7 +81,9 @@ export default function LoanQueue() {
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-foreground-muted">{loan.purpose} · Salary {loan.salary}</span>
+                  <span className="text-[10px] text-foreground-muted">
+                    {loan.purpose} · Salary R {loan.salary.toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                   <button

@@ -8,25 +8,29 @@ const IMPACT_ITEMS = [
     id: 'impact-1',
     icon: Heart,
     title: 'Families First',
-    description: 'We believe every family deserves cinematic memories regardless of budget. Our financing bridges the gap.',
+    description:
+      'We believe every family deserves cinematic memories regardless of budget. Our financing bridges the gap.',
   },
   {
     id: 'impact-2',
     icon: Users,
     title: 'Community Lending',
-    description: 'Responsible loans designed for working South Africans. Fair rates, transparent terms, human support.',
+    description:
+      'Responsible loans designed for working South Africans. Fair rates, transparent terms, human support.',
   },
   {
     id: 'impact-3',
     icon: MapPin,
     title: 'Proudly South African',
-    description: 'Rooted in Johannesburg, serving communities from Cape Town to Limpopo. African excellence, global standards.',
+    description:
+      'Rooted in Johannesburg, serving communities from Cape Town to Limpopo. African excellence, global standards.',
   },
   {
     id: 'impact-4',
     icon: Zap,
     title: 'Empowering Moments',
-    description: 'From township grooves to Sandton weddings — every event deserves a cinematic legacy.',
+    description:
+      'From township grooves to Sandton weddings — every event deserves a cinematic legacy.',
   },
 ];
 
@@ -43,16 +47,21 @@ export default function CommunitySection() {
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <span className="text-xs font-semibold tracking-widest uppercase text-primary mb-3 block">Our Purpose</span>
+            <span className="text-xs font-semibold tracking-widest uppercase text-primary mb-3 block">
+              Our Purpose
+            </span>
             <h2 className="font-display text-4xl lg:text-5xl font-light text-foreground mb-6">
               More Than Photography.{' '}
               <span className="text-gradient-gold italic">Community Empowerment.</span>
             </h2>
             <p className="text-foreground-muted text-base leading-relaxed mb-6">
-              VSCOBAR was born from a simple belief: every South African family deserves to have their most important moments preserved with dignity and artistry — regardless of income.
+              VSM was born from a simple belief: every South African family deserves to have their
+              most important moments preserved with dignity and artistry — regardless of income.
             </p>
             <p className="text-foreground-muted text-base leading-relaxed mb-8">
-              We combine luxury photography with responsible financial services to create a platform that doesn&apos;t just capture memories — it empowers the communities that create them.
+              We combine luxury photography with responsible financial services to create a platform
+              that doesn&apos;t just capture memories — it empowers the communities that create
+              them.
             </p>
             <div className="flex items-center gap-4">
               <div className="w-12 h-1 bg-gold-gradient rounded-full" />

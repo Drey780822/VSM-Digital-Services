@@ -68,11 +68,9 @@ export default function HeroSection() {
           transition={{ duration: 0.9, delay: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
           className="font-display hero-text-hero-xl font-light text-foreground mb-6 max-w-5xl mx-auto"
         >
-          Preserve Every{' '}
-          <span className="text-gradient-gold italic">Moment.</span>
+          Preserve Every <span className="text-gradient-gold italic">Moment.</span>
           <br />
-          Empower Every{' '}
-          <span className="text-gradient-silver italic">Life.</span>
+          Empower Every <span className="text-gradient-silver italic">Life.</span>
         </motion.h1>
 
         <motion.p
@@ -81,8 +79,8 @@ export default function HeroSection() {
           transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
           className="text-lg lg:text-xl text-foreground-muted max-w-2xl mx-auto mb-12 leading-relaxed font-light"
         >
-          VSCOBAR helps communities preserve memories and access financial support
-          through one trusted digital platform.
+          VSM helps communities preserve memories and access financial support through one trusted
+          digital platform.
         </motion.p>
 
         <motion.div
@@ -121,8 +119,12 @@ export default function HeroSection() {
             { value: '8 Yrs', label: 'Trusted Experience' },
           ]?.map((stat) => (
             <div key={`hero-stat-${stat?.label}`} className="text-center">
-              <div className="font-display text-2xl font-semibold text-gradient-gold counter-value">{stat?.value}</div>
-              <div className="text-xs text-foreground-muted tracking-wide mt-0.5">{stat?.label}</div>
+              <div className="font-display text-2xl font-semibold text-gradient-gold counter-value">
+                {stat?.value}
+              </div>
+              <div className="text-xs text-foreground-muted tracking-wide mt-0.5">
+                {stat?.label}
+              </div>
             </div>
           ))}
         </motion.div>

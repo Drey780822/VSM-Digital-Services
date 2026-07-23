@@ -4,7 +4,6 @@ import AppLogo from '@/components/ui/AppLogo';
 import { MessageCircle, Mail, Phone, MapPin } from 'lucide-react';
 import Icon from '@/components/ui/AppIcon';
 
-
 export default function LandingFooter() {
   return (
     <footer className="relative bg-background-secondary border-t border-border">
@@ -15,10 +14,11 @@ export default function LandingFooter() {
           <div className="lg:col-span-1">
             <div className="flex items-center gap-3 mb-4">
               <AppLogo size={36} />
-              <span className="font-display text-xl font-semibold text-gradient-gold">VSCOBAR</span>
+              <span className="font-display text-xl font-semibold text-gradient-gold">VSM</span>
             </div>
             <p className="text-sm text-foreground-muted leading-relaxed mb-5">
-              African luxury photography and smart financing. Preserving moments. Empowering communities.
+              African luxury photography and smart financing. Preserving moments. Empowering
+              communities.
             </p>
             <div className="flex items-center gap-3">
               {[
@@ -40,11 +40,25 @@ export default function LandingFooter() {
 
           {/* Services */}
           <div>
-            <h4 className="text-xs font-semibold tracking-widest uppercase text-foreground mb-4">Services</h4>
+            <h4 className="text-xs font-semibold tracking-widest uppercase text-foreground mb-4">
+              Services
+            </h4>
             <ul className="space-y-2.5">
-              {['Wedding Photography', 'Event Videography', 'Drone Coverage', 'Memory Vault', 'Event Loans', 'Personal Loans']?.map((item) => (
+              {[
+                'Wedding Photography',
+                'Event Videography',
+                'Drone Coverage',
+                'Memory Vault',
+                'Event Loans',
+                'Personal Loans',
+              ]?.map((item) => (
                 <li key={`footer-svc-${item}`}>
-                  <a href="#" className="text-sm text-foreground-muted hover:text-primary transition-colors duration-200">{item}</a>
+                  <a
+                    href="#"
+                    className="text-sm text-foreground-muted hover:text-primary transition-colors duration-200"
+                  >
+                    {item}
+                  </a>
                 </li>
               ))}
             </ul>
@@ -52,7 +66,9 @@ export default function LandingFooter() {
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-xs font-semibold tracking-widest uppercase text-foreground mb-4">Platform</h4>
+            <h4 className="text-xs font-semibold tracking-widest uppercase text-foreground mb-4">
+              Platform
+            </h4>
             <ul className="space-y-2.5">
               {[
                 { label: 'Book an Event', href: '#packages' },
@@ -62,7 +78,10 @@ export default function LandingFooter() {
                 { label: 'Admin Login', href: '/admin-dashboard' },
               ]?.map((item) => (
                 <li key={`footer-link-${item?.label}`}>
-                  <Link href={item?.href} className="text-sm text-foreground-muted hover:text-primary transition-colors duration-200">
+                  <Link
+                    href={item?.href}
+                    className="text-sm text-foreground-muted hover:text-primary transition-colors duration-200"
+                  >
                     {item?.label}
                   </Link>
                 </li>
@@ -72,19 +91,33 @@ export default function LandingFooter() {
 
           {/* Contact */}
           <div>
-            <h4 className="text-xs font-semibold tracking-widest uppercase text-foreground mb-4">Contact</h4>
+            <h4 className="text-xs font-semibold tracking-widest uppercase text-foreground mb-4">
+              Contact
+            </h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-3">
                 <MapPin size={14} className="text-primary mt-0.5 flex-shrink-0" />
-                <span className="text-sm text-foreground-muted">Sandton, Johannesburg, South Africa</span>
+                <span className="text-sm text-foreground-muted">
+                  Sandton, Johannesburg, South Africa
+                </span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone size={14} className="text-primary flex-shrink-0" />
-                <a href="tel:+27000000000" className="text-sm text-foreground-muted hover:text-primary transition-colors">+27 000 000 0000</a>
+                <a
+                  href="tel:+27000000000"
+                  className="text-sm text-foreground-muted hover:text-primary transition-colors"
+                >
+                  +27 000 000 0000
+                </a>
               </li>
               <li className="flex items-center gap-3">
                 <Mail size={14} className="text-primary flex-shrink-0" />
-                <a href="mailto:info@vscobar.co.za" className="text-sm text-foreground-muted hover:text-primary transition-colors">info@vscobar.co.za</a>
+                <a
+                  href="mailto:info@VSM.co.za"
+                  className="text-sm text-foreground-muted hover:text-primary transition-colors"
+                >
+                  info@VSM.co.za
+                </a>
               </li>
             </ul>
             <a
@@ -103,11 +136,15 @@ export default function LandingFooter() {
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-foreground-muted">
-            © 2026 VSCOBAR. All rights reserved. Proudly South African.
+            © 2026 VSM. All rights reserved. Proudly South African.
           </p>
           <div className="flex items-center gap-5">
             {['Privacy Policy', 'Terms of Service', 'POPIA Compliance']?.map((item) => (
-              <a key={`legal-${item}`} href="#" className="text-xs text-foreground-muted hover:text-primary transition-colors duration-200">
+              <a
+                key={`legal-${item}`}
+                href="#"
+                className="text-xs text-foreground-muted hover:text-primary transition-colors duration-200"
+              >
                 {item}
               </a>
             ))}

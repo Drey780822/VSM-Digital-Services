@@ -31,18 +31,21 @@ A modern Next.js 15 application built with TypeScript and Tailwind CSS.
 ## 🛠️ Installation
 
 1. Install dependencies:
-  ```bash
-  npm install
-  # or
-  yarn install
-  ```
+
+```bash
+npm install
+# or
+yarn install
+```
 
 2. Start the development server:
-  ```bash
-  npm run dev
-  # or
-  yarn dev
-  ```
+
+```bash
+npm run dev
+# or
+yarn dev
+```
+
 3. Open [http://localhost:4028](http://localhost:4028) with your browser to see the result.
 
 ## 📁 Project Structure
@@ -70,6 +73,7 @@ You can start editing the page by modifying `src/app/page.tsx`. The page auto-up
 ## 🎨 Styling
 
 This project uses Tailwind CSS for styling with the following features:
+
 - Utility-first approach for rapid development
 - Custom theme configuration
 - Responsive design utilities
@@ -90,14 +94,23 @@ This project uses Tailwind CSS for styling with the following features:
 Build the application for production:
 npm run build
 
+## Supabase setup
+
+1. Create a Supabase project.
+2. Add your project URL and anon key to the environment file.
+3. Run the SQL in Database/supabase_schema.sql in the Supabase SQL editor.
+4. Open /auth/login to sign in to the owner dashboard.
+
 ## Core Features
 
 ### Authentication
+
 - User registration / login
 - Password hashing (bcrypt)
 - Role‑based access: `user` and `admin`
 
 ### Loan Management System
+
 - Apply for loans **R100 – R10,000** with **10% fixed interest**, **1‑month repayment**
 - Upload ID, bank statement, proof of income
 - **Loan calculator** & **repayment schedule generator**
@@ -108,23 +121,27 @@ npm run build
 - **Admin dashboard** to approve/reject, view all applications, and analytics
 
 ### Photography Booking System
+
 - Create / manage photography packages (price, duration, features)
 - Book events with date/time selection – **prevents double bookings**
 - **Private client galleries** – upload and download photos
 - Admin panel to manage bookings and packages
 
 ### Integration: “Finance Your Event”
+
 - User selects a photography package → clicks “Finance Your Event”
 - System automatically creates a loan linked to that booking (amount = package price)
 - Loan repayment terms apply (1 month, 10% interest)
 
 ### Payments
+
 - **PayFast** & **Ozow** integration (sandbox ready)
 - **Bank transfer simulation** (admin can mark as paid)
 - **Debit order simulation** (manual or cron‑based)
 - Payment status tracking (pending / completed / failed)
 
 ### Notifications
+
 - Email notifications (loan status, booking confirmation, payment receipts)
 - SMS via Twilio (optional)
 - WhatsApp notifications (optional – template ready)

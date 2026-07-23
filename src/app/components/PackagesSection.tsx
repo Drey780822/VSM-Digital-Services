@@ -9,7 +9,7 @@ const PACKAGES = [
     id: 'pkg-essential',
     tier: 'Essential',
     name: 'Essential Memories',
-    price: 'R 4,500',
+    price: 'R 5,500',
     priceNote: 'or from R 750/month',
     description: 'Perfect for intimate events where every moment matters.',
     highlight: false,
@@ -80,7 +80,10 @@ export default function PackagesSection() {
   const [selectedPkg, setSelectedPkg] = useState<string | null>(null);
 
   return (
-    <section id="packages" className="relative py-24 lg:py-32 bg-background-secondary overflow-hidden">
+    <section
+      id="packages"
+      className="relative py-24 lg:py-32 bg-background-secondary overflow-hidden"
+    >
       <div className="section-divider absolute top-0 left-0 right-0" />
       <div className="blob-gold absolute top-1/2 left-0 w-80 h-80 opacity-20" />
       <div className="max-w-screen-2xl mx-auto px-6 lg:px-10 xl:px-16">
@@ -91,13 +94,15 @@ export default function PackagesSection() {
           transition={{ duration: 0.7 }}
           className="text-center mb-16"
         >
-          <span className="text-xs font-semibold tracking-widest uppercase text-primary mb-3 block">Event Packages</span>
+          <span className="text-xs font-semibold tracking-widest uppercase text-primary mb-3 block">
+            Event Packages
+          </span>
           <h2 className="font-display text-4xl lg:text-5xl font-light text-foreground mb-4">
-            Choose Your{' '}
-            <span className="text-gradient-gold italic">Experience</span>
+            Choose Your <span className="text-gradient-gold italic">Experience</span>
           </h2>
           <p className="text-foreground-muted max-w-xl mx-auto text-base leading-relaxed">
-            Three tiers of luxury photography service — each with financing available through our smart loan platform.
+            Three tiers of luxury photography service — each with financing available through our
+            smart loan platform.
           </p>
         </motion.div>
 
@@ -114,31 +119,52 @@ export default function PackagesSection() {
                   ? 'border-2 border-gold-strong glow-gold scale-[1.02] lg:scale-105'
                   : 'border border-border hover:border-gold'
               }`}
-              style={{ background: pkg?.highlight ? 'linear-gradient(160deg, #1A1A1F 0%, #222228 100%)' : 'var(--card)' }}
+              style={{
+                background: pkg?.highlight
+                  ? 'linear-gradient(160deg, #1A1A1F 0%, #222228 100%)'
+                  : 'var(--card)',
+              }}
             >
               {pkg?.badge && (
-                <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-semibold tracking-wide ${
-                  pkg?.highlight ? 'bg-gold-gradient text-background' : 'bg-muted text-foreground-muted border border-border'
-                }`}>
+                <div
+                  className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-semibold tracking-wide ${
+                    pkg?.highlight
+                      ? 'bg-gold-gradient text-background'
+                      : 'bg-muted text-foreground-muted border border-border'
+                  }`}
+                >
                   {pkg?.badge}
                 </div>
               )}
 
               <div className="p-7 lg:p-8">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-5 ${
-                  pkg?.highlight ? 'bg-gold-gradient' : 'bg-muted'
-                }`}>
-                  <pkg.icon size={20} className={pkg?.highlight ? 'text-background' : 'text-primary'} />
+                <div
+                  className={`w-12 h-12 rounded-xl flex items-center justify-center mb-5 ${
+                    pkg?.highlight ? 'bg-gold-gradient' : 'bg-muted'
+                  }`}
+                >
+                  <pkg.icon
+                    size={20}
+                    className={pkg?.highlight ? 'text-background' : 'text-primary'}
+                  />
                 </div>
 
-                <div className="text-xs font-semibold tracking-widest uppercase text-foreground-muted mb-1">{pkg?.tier}</div>
-                <h3 className={`font-display text-2xl font-semibold mb-2 ${pkg?.highlight ? 'text-gradient-gold' : 'text-foreground'}`}>
+                <div className="text-xs font-semibold tracking-widest uppercase text-foreground-muted mb-1">
+                  {pkg?.tier}
+                </div>
+                <h3
+                  className={`font-display text-2xl font-semibold mb-2 ${pkg?.highlight ? 'text-gradient-gold' : 'text-foreground'}`}
+                >
                   {pkg?.name}
                 </h3>
-                <p className="text-sm text-foreground-muted leading-relaxed mb-6">{pkg?.description}</p>
+                <p className="text-sm text-foreground-muted leading-relaxed mb-6">
+                  {pkg?.description}
+                </p>
 
                 <div className="mb-2">
-                  <span className={`font-display text-3xl font-semibold ${pkg?.highlight ? 'text-gradient-gold' : 'text-foreground'}`}>
+                  <span
+                    className={`font-display text-3xl font-semibold ${pkg?.highlight ? 'text-gradient-gold' : 'text-foreground'}`}
+                  >
                     {pkg?.price}
                   </span>
                 </div>
@@ -149,13 +175,29 @@ export default function PackagesSection() {
                 <ul className="space-y-3 mb-8">
                   {pkg?.features?.map((feature) => (
                     <li key={feature?.id} className="flex items-start gap-3">
-                      <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                        feature?.included
-                          ? pkg?.highlight ? 'bg-gold-gradient' : 'bg-primary/20' :'bg-muted'
-                      }`}>
-                        <Check size={10} className={feature?.included ? (pkg?.highlight ? 'text-background' : 'text-primary') : 'text-muted-foreground opacity-30'} />
+                      <div
+                        className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                          feature?.included
+                            ? pkg?.highlight
+                              ? 'bg-gold-gradient'
+                              : 'bg-primary/20'
+                            : 'bg-muted'
+                        }`}
+                      >
+                        <Check
+                          size={10}
+                          className={
+                            feature?.included
+                              ? pkg?.highlight
+                                ? 'text-background'
+                                : 'text-primary'
+                              : 'text-muted-foreground opacity-30'
+                          }
+                        />
                       </div>
-                      <span className={`text-sm ${feature?.included ? 'text-foreground' : 'text-foreground-muted line-through opacity-50'}`}>
+                      <span
+                        className={`text-sm ${feature?.included ? 'text-foreground' : 'text-foreground-muted line-through opacity-50'}`}
+                      >
                         {feature?.text}
                       </span>
                     </li>
@@ -191,7 +233,10 @@ export default function PackagesSection() {
         >
           <p className="text-sm text-foreground-muted">
             All packages include VAT. Custom packages available for large corporate events.{' '}
-            <a href="mailto:info@vscobar.co.za" className="text-primary hover:text-primary-light transition-colors">
+            <a
+              href="mailto:info@VSM.co.za"
+              className="text-primary hover:text-primary-light transition-colors"
+            >
               Contact us
             </a>
           </p>

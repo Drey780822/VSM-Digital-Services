@@ -26,15 +26,13 @@ export default function LandingNav() {
     <>
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          scrolled
-            ? 'bg-glass-dark border-b border-gold py-3' :'bg-transparent py-5'
+          scrolled ? 'bg-glass-dark border-b border-gold py-3' : 'bg-transparent py-5'
         }`}
       >
         <div className="max-w-screen-2xl mx-auto px-6 lg:px-10 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             <AppLogo size={36} />
-            <span className="font-display text-xl font-semibold tracking-wide text-gradient-gold hidden sm:block">       
-            </span>
+            <span className="font-display text-xl font-semibold tracking-wide text-gradient-gold hidden sm:block"></span>
           </Link>
 
           <div className="hidden lg:flex items-center gap-8">
@@ -57,10 +55,7 @@ export default function LandingNav() {
               <Phone size={14} />
               <span>+27 000 000 0000</span>
             </a>
-            <Link
-              href="#booking"
-              className="btn-gold px-5 py-2.5 text-sm font-semibold rounded-md"
-            >
+            <Link href="#booking" className="btn-gold px-5 py-2.5 text-sm font-semibold rounded-md">
               Book Event
             </Link>
             <Link
@@ -98,7 +93,7 @@ export default function LandingNav() {
           }`}
         >
           <div className="flex items-center justify-between p-5 border-b border-border">
-            <span className="font-display text-lg text-gradient-gold font-semibold">VSCOBAR</span>
+            <span className="font-display text-lg text-gradient-gold font-semibold">VSM</span>
             <button
               onClick={() => setMobileOpen(false)}
               className="p-1.5 text-foreground-muted hover:text-primary transition-colors"
