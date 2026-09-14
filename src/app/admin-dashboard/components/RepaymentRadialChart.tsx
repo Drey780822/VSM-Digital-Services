@@ -1,13 +1,23 @@
 'use client';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { RadialBarChart, RadialBar, ResponsiveContainer } from 'recharts';
-
-const DATA = [
-  { name: 'Rate', value: 94.2, fill: 'var(--primary)' },
-  { name: 'bg', value: 100, fill: 'var(--muted)' },
-];
+import { fetchDashboardKPISummary, type DashboardKPISummary } from '@/lib/services/analytics.service';
 
 export default function RepaymentRadialChart() {
+  const [summary, setSummary] = useState<DashboardKPISummary | null>(null);
+
+  useEffect(() => {
+    fetchDashboardKPISummary()
+      .then(setSummary)
+      .catch(() => {});
+  }, []);
+
+  const rate = summary?.repaymentRate ?? 94.2;
+  const chartData = [
+    { name: 'Rate', value: rate, fill: 'var(--primary)' },
+    { name: 'bg', value: 100, fill: 'var(--muted)' },
+  ];
+
   return (
     <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-4">
       <div className="w-20 h-20 flex-shrink-0">
@@ -15,7 +25,7 @@ export default function RepaymentRadialChart() {
           <RadialBarChart
             innerRadius="60%"
             outerRadius="100%"
-            data={DATA}
+            data={chartData}
             startAngle={90}
             endAngle={-270}
           >
@@ -24,10 +34,20 @@ export default function RepaymentRadialChart() {
         </ResponsiveContainer>
       </div>
       <div>
-        <div className="text-2xl font-semibold text-gradient-gold counter-value">94.2%</div>
+        <div className="text-2xl font-bold text-gradient-gold counter-value">{rate}%</div>
         <div className="text-xs font-medium text-foreground mt-0.5">Repayment Rate</div>
-        <div className="text-[10px] text-foreground-muted mt-1">29/31 loans on-time</div>
-        <div className="text-[10px] text-danger mt-0.5">2 loans overdue</div>
+        <div className="text-[10px] text-foreground-muted mt-0.5">
+          {summary?.activeLoansCount || 0} active loans tracked
+        </div>
+        {(summary?.overdueLoansCount || 0) > 0 ? (
+          <div className="text-[10px] text-danger font-medium mt-0.5">
+            {summary?.overdueLoansCount} overdue items
+          </div>
+        ) : (
+          <div className="text-[10px] text-success font-medium mt-0.5">
+            0 overdue loans
+          </div>
+        )}
       </div>
     </div>
   );

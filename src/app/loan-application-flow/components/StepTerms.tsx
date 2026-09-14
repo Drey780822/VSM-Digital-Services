@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { ArrowRight, ArrowLeft, FileText, CreditCard, AlertTriangle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { LoanData } from './LoanWizard';
+import { createLoan } from '@/lib/services/loans.service';
 
 interface Props {
   data: LoanData;
@@ -12,10 +13,6 @@ interface Props {
 }
 
 const INTEREST_RATE = 0.18;
-
-function generateRef(): string {
-  return `VSC-${Date.now().toString(36).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
-}
 
 export default function StepTerms({ data, updateData, onNext, onBack }: Props) {
   const [termsAccepted, setTermsAccepted] = useState(data.termsAccepted);
@@ -33,18 +30,39 @@ export default function StepTerms({ data, updateData, onNext, onBack }: Props) {
 
   const canSubmit = termsAccepted && debitAccepted;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
     updateData({ termsAccepted: true, debitOrderAccepted: true });
-    // Backend integration point: submit loan application to Supabase, trigger admin notification
-    setTimeout(() => {
-      const ref = generateRef();
-      updateData({ referenceNumber: ref });
-      setSubmitting(false);
-      toast.success('Application submitted successfully!');
+
+    try {
+      const created = await createLoan({
+        applicantName: `${data.firstName} ${data.lastName}`.trim(),
+        email: data.email,
+        phone: data.phone,
+        idNumber: data.idNumber,
+        amount: data.loanAmount,
+        interestRate: 18.0,
+        termMonths: data.term,
+        purpose: data.purpose || 'Photography Financing',
+        salary: data.salary || 0,
+        expenses: data.expenses || 0,
+        employer: data.employer || 'Self-employed',
+        employmentType: data.employmentType || 'Standard',
+        bankName: data.bankName || 'Standard Bank',
+        accountNumber: data.accountNumber || '',
+        riskLevel: 'Low',
+        status: 'Submitted',
+      });
+
+      updateData({ referenceNumber: created.referenceNumber });
+      toast.success('Loan application submitted to VSM Operations!');
       onNext();
-    }, 2000);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to submit loan application');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

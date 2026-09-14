@@ -1,32 +1,26 @@
-import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
+import {
+  fetchBookings,
+  createBooking as createBookingService,
+  updateBookingStatus as updateBookingStatusService,
+  type BookingRecord,
+  type BookingStatus,
+} from './services/bookings.service';
+import {
+  fetchLoans,
+  createLoan as createLoanService,
+  updateLoanStatus as updateLoanStatusService,
+  type LoanRecord,
+} from './services/loans.service';
+import {
+  fetchNotifications as fetchNotificationsService,
+  type NotificationRecord,
+} from './services/notifications.service';
+import {
+  fetchDashboardKPISummary,
+  type DashboardKPISummary,
+} from './services/analytics.service';
 
-export type BookingStatus =
-  | 'Submitted'
-  | 'Under Review'
-  | 'Approved'
-  | 'Scheduled'
-  | 'Event Completed'
-  | 'Gallery Uploaded'
-  | 'Delivered'
-  | 'Rejected';
-
-export interface BookingRecord {
-  id: string;
-  client: string;
-  email: string;
-  phone: string;
-  eventType: string;
-  packageName: string;
-  eventDate: string;
-  eventTime: string;
-  location: string;
-  deposit: number;
-  status: BookingStatus;
-  financed: boolean;
-  referenceNumber: string;
-  notes?: string;
-  createdAt: string;
-}
+export type { BookingRecord, BookingStatus, LoanRecord, DashboardKPISummary, NotificationRecord };
 
 export interface LoanApplicationRecord {
   id: string;
@@ -36,7 +30,7 @@ export interface LoanApplicationRecord {
   applied: string;
   salary: number;
   risk: 'Low' | 'Medium' | 'High';
-  status: 'Submitted' | 'Under Review' | 'Approved' | 'Rejected' | 'Funded';
+  status: 'Submitted' | 'Under Review' | 'Approved' | 'Rejected' | 'Disbursed' | 'Repaid' | 'Defaulted';
   referenceNumber: string;
 }
 
@@ -54,299 +48,118 @@ export interface DashboardSummary {
   notifications: number;
 }
 
-const BOOKING_STORAGE_KEY = 'vsm-bookings';
-const LOAN_STORAGE_KEY = 'vsm-loans';
-const NOTIFICATION_STORAGE_KEY = 'vsm-notifications';
-
-const seedBookings: BookingRecord[] = [
-  {
-    id: 'bk-001',
-    client: 'Nkosi Dlamini',
-    email: 'nkosi@example.com',
-    phone: '+27 82 111 2222',
-    eventType: 'Wedding',
-    packageName: 'Legacy Collection',
-    eventDate: '2026-06-14',
-    eventTime: '16:00',
-    location: 'Sandton Convention Centre',
-    deposit: 7250,
-    status: 'Approved',
-    financed: true,
-    referenceNumber: 'VSM-20260614-001',
-    createdAt: '2026-05-20T10:00:00.000Z',
-  },
-  {
-    id: 'bk-002',
-    client: 'Zanele Mokoena',
-    email: 'zanele@example.com',
-    phone: '+27 71 333 4444',
-    eventType: 'Birthday',
-    packageName: 'Cinematic Experience',
-    eventDate: '2026-06-21',
-    eventTime: '19:30',
-    location: 'Soweto, JHB',
-    deposit: 4450,
-    status: 'Scheduled',
-    financed: false,
-    referenceNumber: 'VSM-20260621-002',
-    createdAt: '2026-05-21T09:30:00.000Z',
-  },
-  {
-    id: 'bk-003',
-    client: 'Sipho Khumalo',
-    email: 'sipho@example.com',
-    phone: '+27 84 555 6666',
-    eventType: 'Corporate',
-    packageName: 'Essential Memories',
-    eventDate: '2026-06-28',
-    eventTime: '09:00',
-    location: 'Sandton City',
-    deposit: 2250,
-    status: 'Under Review',
-    financed: false,
-    referenceNumber: 'VSM-20260628-003',
-    createdAt: '2026-05-22T11:00:00.000Z',
-  },
-];
-
-const seedLoans: LoanApplicationRecord[] = [
-  {
-    id: 'ln-041',
-    applicant: 'Sibusiso Mahlangu',
-    amount: 8900,
-    purpose: 'Cinematic Package',
-    applied: '2026-05-26',
-    salary: 18500,
-    risk: 'Low',
-    status: 'Under Review',
-    referenceNumber: 'LOAN-20260526-041',
-  },
-  {
-    id: 'ln-042',
-    applicant: 'Palesa Dlamini',
-    amount: 4500,
-    purpose: 'Essential Package',
-    applied: '2026-05-27',
-    salary: 12000,
-    risk: 'Low',
-    status: 'Approved',
-    referenceNumber: 'LOAN-20260527-042',
-  },
-];
-
-function readStorageItem<T>(key: string, fallback: T): T {
-  if (typeof window === 'undefined') {
-    return fallback;
-  }
-
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function writeStorageItem<T>(key: string, value: T) {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  window.localStorage.setItem(key, JSON.stringify(value));
-}
-
-function ensureSeedData() {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  const existingBookings = readStorageItem<BookingRecord[]>(BOOKING_STORAGE_KEY, []);
-  if (existingBookings.length === 0) {
-    writeStorageItem(BOOKING_STORAGE_KEY, seedBookings);
-  }
-
-  const existingLoans = readStorageItem<LoanApplicationRecord[]>(LOAN_STORAGE_KEY, []);
-  if (existingLoans.length === 0) {
-    writeStorageItem(LOAN_STORAGE_KEY, seedLoans);
-  }
-
-  const existingNotifications = readStorageItem<
-    Array<{ id: string; message: string; time: string }>
-  >(NOTIFICATION_STORAGE_KEY, []);
-  if (existingNotifications.length === 0) {
-    writeStorageItem(NOTIFICATION_STORAGE_KEY, [
-      { id: 'notif-1', message: 'New booking request received', time: '8 min ago' },
-      { id: 'notif-2', message: 'Gallery upload pending for 2 events', time: '35 min ago' },
-    ]);
-  }
-}
-
 export async function getDashboardSummary(): Promise<DashboardSummary> {
-  ensureSeedData();
-  const bookings = await getBookings();
-  const loans = await getLoanApplications();
-  const completed = bookings.filter(
-    (booking) =>
-      booking.status === 'Event Completed' ||
-      booking.status === 'Gallery Uploaded' ||
-      booking.status === 'Delivered'
-  ).length;
-  const upcoming = bookings.filter((booking) =>
-    ['Approved', 'Scheduled'].includes(booking.status)
-  ).length;
-  const pendingLoans = loans.filter(
-    (loan) => loan.status === 'Submitted' || loan.status === 'Under Review'
-  ).length;
-  const approvedLoans = loans.filter(
-    (loan) => loan.status === 'Approved' || loan.status === 'Funded'
-  ).length;
-  const revenueThisMonth = bookings.reduce((total, booking) => total + booking.deposit, 0);
-  const revenueThisYear = revenueThisMonth * 12;
-
+  const kpis = await fetchDashboardKPISummary();
   return {
-    totalCustomers: new Set(bookings.map((booking) => booking.client)).size + 2,
-    totalBookings: bookings.length,
-    activeBookings: bookings.filter(
-      (booking) => !['Delivered', 'Rejected'].includes(booking.status)
-    ).length,
-    upcomingEvents: upcoming,
-    completedEvents: completed,
-    pendingLoans,
-    approvedLoans,
-    revenueThisMonth,
-    revenueThisYear,
-    galleryQueue: 3,
-    notifications: 4,
+    totalCustomers: kpis.totalCustomers,
+    totalBookings: kpis.totalBookings,
+    activeBookings: kpis.activeBookings,
+    upcomingEvents: kpis.upcomingEvents,
+    completedEvents: kpis.completedEvents,
+    pendingLoans: kpis.pendingLoans,
+    approvedLoans: kpis.approvedLoans,
+    revenueThisMonth: kpis.totalRevenue,
+    revenueThisYear: kpis.totalRevenue * 12,
+    galleryQueue: kpis.galleryQueueCount,
+    notifications: kpis.unreadNotificationsCount,
   };
 }
 
 export async function getBookings(): Promise<BookingRecord[]> {
-  ensureSeedData();
-  const localBookings = readStorageItem<BookingRecord[]>(BOOKING_STORAGE_KEY, []);
-
-  if (isSupabaseConfigured()) {
-    try {
-      const supabase = createClient();
-      if (supabase) {
-        const { data, error } = await supabase
-          .from('bookings')
-          .select('*')
-          .order('created_at', { ascending: false });
-        if (!error && data) {
-          return data as BookingRecord[];
-        }
-      }
-    } catch {
-      // fall back silently to local storage
-    }
-  }
-
-  return localBookings;
+  return fetchBookings();
 }
 
 export async function getLoanApplications(): Promise<LoanApplicationRecord[]> {
-  ensureSeedData();
-  const localLoans = readStorageItem<LoanApplicationRecord[]>(LOAN_STORAGE_KEY, []);
-
-  if (isSupabaseConfigured()) {
-    try {
-      const supabase = createClient();
-      if (supabase) {
-        const { data, error } = await supabase
-          .from('loan_applications')
-          .select('*')
-          .order('created_at', { ascending: false });
-        if (!error && data) {
-          return data as LoanApplicationRecord[];
-        }
-      }
-    } catch {
-      // fall back silently to local storage
-    }
-  }
-
-  return localLoans;
+  const loans = await fetchLoans();
+  return loans.map((l) => ({
+    id: l.id,
+    applicant: l.applicantName,
+    amount: l.amount,
+    purpose: l.purpose,
+    applied: l.createdAt.slice(0, 10),
+    salary: l.salary,
+    risk: l.riskLevel,
+    status: l.status as LoanApplicationRecord['status'],
+    referenceNumber: l.referenceNumber,
+  }));
 }
 
 export async function createBooking(
   payload: Omit<BookingRecord, 'id' | 'createdAt'>
 ): Promise<BookingRecord> {
-  const booking: BookingRecord = {
-    id: `bk-${Date.now().toString(36).toUpperCase()}`,
-    createdAt: new Date().toISOString(),
-    ...payload,
-  };
-
-  const existing = readStorageItem<BookingRecord[]>(BOOKING_STORAGE_KEY, []);
-  const next = [booking, ...existing];
-  writeStorageItem(BOOKING_STORAGE_KEY, next);
-
-  if (isSupabaseConfigured()) {
-    try {
-      const supabase = createClient();
-      if (supabase) {
-        await supabase.from('bookings').insert({
-          id: booking.id,
-          customer_name: booking.client,
-          event_type: booking.eventType,
-          package_name: booking.packageName,
-          event_date: booking.eventDate,
-          event_time: booking.eventTime,
-          location: booking.location,
-          status: booking.status,
-          total_amount: booking.deposit,
-          reference_number: booking.referenceNumber,
-          created_at: booking.createdAt,
-        });
-      }
-    } catch {
-      // ignore and preserve local persistence
-    }
-  }
-
-  return booking;
+  return createBookingService({
+    customerName: payload.client,
+    email: payload.email,
+    phone: payload.phone,
+    idNumber: payload.idNumber,
+    eventType: payload.eventType,
+    packageName: payload.packageName,
+    eventDate: payload.eventDate,
+    eventTime: payload.eventTime,
+    venueName: payload.venueName,
+    venueAddress: payload.venueAddress,
+    guestCount: payload.guestCount,
+    addons: payload.addons,
+    totalAmount: payload.deposit,
+    deposit: payload.deposit,
+    status: payload.status,
+    financed: payload.financed,
+    notes: payload.notes,
+  });
 }
 
-export async function createLoanApplication(
-  payload: Omit<LoanApplicationRecord, 'id'>
-): Promise<LoanApplicationRecord> {
-  const application: LoanApplicationRecord = {
-    id: `ln-${Date.now().toString(36).toUpperCase()}`,
-    ...payload,
+export async function createLoanApplication(payload: {
+  applicant: string;
+  amount: number;
+  purpose: string;
+  status?: string;
+  referenceNumber?: string;
+  salary?: number;
+  risk?: string;
+  email?: string;
+  phone?: string;
+}): Promise<LoanApplicationRecord> {
+  const created = await createLoanService({
+    applicantName: payload.applicant,
+    email: payload.email || 'customer@vsm.co.za',
+    phone: payload.phone || '+27 00 000 0000',
+    amount: payload.amount,
+    purpose: payload.purpose,
+    salary: payload.salary || 0,
+    riskLevel: (payload.risk as 'Low' | 'Medium' | 'High') || 'Low',
+    status: (payload.status as 'Submitted' | 'Under Review' | 'Approved' | 'Rejected' | 'Disbursed' | 'Repaid' | 'Defaulted') || 'Submitted',
+  });
+
+  return {
+    id: created.id,
+    applicant: created.applicantName,
+    amount: created.amount,
+    purpose: created.purpose,
+    applied: created.createdAt.slice(0, 10),
+    salary: created.salary,
+    risk: created.riskLevel,
+    status: created.status as LoanApplicationRecord['status'],
+    referenceNumber: created.referenceNumber,
   };
-
-  const existing = readStorageItem<LoanApplicationRecord[]>(LOAN_STORAGE_KEY, []);
-  const next = [application, ...existing];
-  writeStorageItem(LOAN_STORAGE_KEY, next);
-
-  if (isSupabaseConfigured()) {
-    try {
-      const supabase = createClient();
-      if (supabase) {
-        await supabase.from('loan_applications').insert({
-          id: application.id,
-          applicant_name: application.applicant,
-          amount: application.amount,
-          purpose: application.purpose,
-          status: application.status,
-          reference_number: application.referenceNumber,
-          created_at: new Date().toISOString(),
-        });
-      }
-    } catch {
-      // ignore and preserve local persistence
-    }
-  }
-
-  return application;
 }
 
 export async function getNotifications(): Promise<
   Array<{ id: string; message: string; time: string }>
 > {
-  ensureSeedData();
-  return readStorageItem(
-    NOTIFICATION_STORAGE_KEY,
-    [] as Array<{ id: string; message: string; time: string }>
-  );
+  const notifs = await fetchNotificationsService('all');
+  return notifs.slice(0, 10).map((n) => {
+    const d = new Date(n.createdAt);
+    const now = new Date();
+    const diffMin = Math.floor((now.getTime() - d.getTime()) / (1000 * 60));
+    let timeStr = 'just now';
+    if (diffMin > 60 * 24) timeStr = `${Math.floor(diffMin / (60 * 24))}d ago`;
+    else if (diffMin > 60) timeStr = `${Math.floor(diffMin / 60)}h ago`;
+    else if (diffMin > 0) timeStr = `${diffMin}m ago`;
+
+    return {
+      id: n.id,
+      message: `${n.title}: ${n.message}`,
+      time: timeStr,
+    };
+  });
 }
