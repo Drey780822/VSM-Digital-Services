@@ -1,14 +1,14 @@
 import React from 'react';
 import type { Metadata, Viewport } from 'next';
-import { DM_Sans } from 'next/font/google';
+import { Manrope } from 'next/font/google';
 import { Toaster } from 'sonner';
 import { AuthProvider } from '@/contexts/AuthContext';
 import '../styles/tailwind.css';
 
-const dmSans = DM_Sans({
+const manrope = Manrope({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
-  variable: '--font-dm-sans',
+  variable: '--font-manrope',
   display: 'swap',
 });
 
@@ -18,7 +18,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'VSM — Luxury Photography & Smart Financing',
+  title: 'VSM — Moments, finance and creative work',
   description:
     'VSM is a premium African digital platform for cinematic event photography and smart loan services — capture memories, empower lives.',
   icons: {
@@ -28,8 +28,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={dmSans.variable}>
-      <body className={dmSans.className}>
+    <html lang="en" className={manrope.variable}>
+      <body className={manrope.className}>
         <AuthProvider>{children}</AuthProvider>
         <Toaster
           position="bottom-right"

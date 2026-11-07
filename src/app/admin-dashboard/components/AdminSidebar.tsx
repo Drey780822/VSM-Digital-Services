@@ -21,6 +21,9 @@ import {
   FileText,
   Sparkles,
   Package,
+  Building2,
+  BriefcaseBusiness,
+  BadgeCheck,
 } from 'lucide-react';
 import { fetchDashboardKPISummary } from '@/lib/services/analytics.service';
 import { useAuth } from '@/contexts/AuthContext';
@@ -74,6 +77,7 @@ export default function AdminSidebar({ collapsed, onCollapse, mobileOpen, onMobi
       label: 'Finance & Loans',
       items: [
         { id: 'nav-loans', icon: TrendingUp, label: 'Loans', href: '/admin-dashboard/loans', badge: badgeCounts.loans },
+        { id: 'nav-payment-review', icon: BadgeCheck, label: 'Payment Review', href: '/admin-dashboard/payments', badge: null },
         { id: 'nav-repayments', icon: CreditCard, label: 'Repayments', href: '/admin-dashboard/repayments', badge: null },
         { id: 'nav-defaults', icon: AlertTriangle, label: 'Defaults', href: '/admin-dashboard/defaults', badge: badgeCounts.defaults, badgeVariant: 'danger' },
         { id: 'nav-analytics', icon: BarChart2, label: 'Analytics', href: '/admin-dashboard/analytics', badge: null },
@@ -84,6 +88,8 @@ export default function AdminSidebar({ collapsed, onCollapse, mobileOpen, onMobi
       label: 'Client Management',
       items: [
         { id: 'nav-clients', icon: Users, label: 'Clients CRM', href: '/admin-dashboard/clients', badge: null },
+        { id: 'nav-business', icon: Building2, label: 'Business Enquiries', href: '/admin-dashboard/business', badge: null },
+        { id: 'nav-opportunities', icon: BriefcaseBusiness, label: 'Opportunities', href: '/admin-dashboard/opportunities', badge: null },
         { id: 'nav-notifications', icon: Bell, label: 'Notifications', href: '/admin-dashboard/notifications', badge: badgeCounts.notifications, badgeVariant: 'gold' },
         { id: 'nav-invoices', icon: FileText, label: 'Invoices', href: '/admin-dashboard/invoices', badge: null },
       ],
@@ -93,6 +99,7 @@ export default function AdminSidebar({ collapsed, onCollapse, mobileOpen, onMobi
       label: 'Content & Settings',
       items: [
         { id: 'nav-gallery', icon: ImageIcon, label: 'Gallery CMS', href: '/admin-dashboard/gallery', badge: null },
+        { id: 'nav-configuration', icon: Package, label: 'Commercial Rules', href: '/admin-dashboard/configuration', badge: null },
         { id: 'nav-settings', icon: Settings, label: 'Settings', href: '/admin-dashboard/settings', badge: null },
       ],
     },

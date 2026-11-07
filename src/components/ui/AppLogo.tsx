@@ -13,7 +13,7 @@ interface AppLogoProps {
 }
 
 const AppLogo = memo(function AppLogo({
-  src = '/assets/images/logo-cirlcle-background-removed-1779933532188.png',
+  src = '/assets/images/logos/vsm-symbol-gold-transparent-1024.png',
   iconName = 'SparklesIcon',
   size = 64,
   className = '',

@@ -35,8 +35,8 @@ module.exports = {
         '2xl': 'calc(var(--radius) + 8px)',
       },
       fontFamily: {
-        sans: ['var(--font-dm-sans)', 'DM Sans', 'sans-serif'],
-        display: ['Cormorant Garamond', 'Georgia', 'serif'],
+        sans: ['var(--font-manrope)', 'Manrope', 'sans-serif'],
+        display: ['var(--font-manrope)', 'Manrope', 'sans-serif'],
       },
       fontSize: {
         'display-2xl': ['4.5rem', { lineHeight: '1.05', letterSpacing: '-0.02em' }],

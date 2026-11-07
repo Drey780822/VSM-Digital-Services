@@ -1,0 +1,8 @@
+import { BriefcaseBusiness, ShieldCheck, Sparkles } from 'lucide-react';
+import PublicShell from '@/components/public/PublicShell';
+import OpportunityList from './OpportunityList';
+
+export default function OpportunitiesPage() {
+  return <PublicShell><main><section className="border-b border-slate-200 bg-white"><div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20"><div className="max-w-3xl"><p className="text-sm font-semibold text-[#A98214]">VSM OPPORTUNITIES</p><h1 className="mt-3 text-4xl font-bold tracking-[-.04em] text-[#0B1F3A] sm:text-5xl">Professional event work for creatives.</h1><p className="mt-5 text-base leading-7 text-slate-600">A practical place for photographers and videographers to discover event opportunities and understand the scope before they register interest.</p></div><div className="mt-10 grid gap-3 sm:grid-cols-3"><Feature icon={BriefcaseBusiness} title="Clear briefs" text="Understand the role, event and deliverables first." /><Feature icon={ShieldCheck} title="Professional process" text="Opportunity details are published when ready." /><Feature icon={Sparkles} title="No promises implied" text="Work is not guaranteed by browsing or applying." /></div></div></section><section className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8"><OpportunityList /></section></main></PublicShell>;
+}
+function Feature({ icon: Icon, title, text }: { icon: typeof BriefcaseBusiness; title: string; text: string }) { return <div className="rounded-lg border border-slate-200 bg-white p-4"><Icon size={18} className="text-[#A98214]" /><h2 className="mt-3 text-sm font-bold text-[#0B1F3A]">{title}</h2><p className="mt-1 text-xs leading-5 text-slate-600">{text}</p></div>; }

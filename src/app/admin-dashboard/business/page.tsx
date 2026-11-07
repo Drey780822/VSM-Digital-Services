@@ -1,0 +1,19 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { Building2, Loader2, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import AdminLayout from '../components/AdminLayout';
+import { fetchCorporateEnquiries, updateCorporateEnquiryStage, type CorporateEnquiry, type EnquiryStage } from '@/lib/services/business.service';
+
+const stages: EnquiryStage[] = ['Proposal', 'Quote', 'Contract', 'Invoice', 'Booking'];
+
+export default function BusinessEnquiriesPage() {
+  const [items, setItems] = useState<CorporateEnquiry[] | null>(null);
+  const load = () => { setItems(null); fetchCorporateEnquiries().then(setItems).catch((error) => { toast.error(error instanceof Error ? error.message : 'Could not load enquiries.'); setItems([]); }); };
+  useEffect(load, []);
+  const update = async (id: string, stage: EnquiryStage) => { try { await updateCorporateEnquiryStage(id, stage); setItems((previous) => previous?.map((item) => item.id === id ? { ...item, stage } : item) || []); toast.success('Enquiry stage updated.'); } catch (error) { toast.error(error instanceof Error ? error.message : 'Could not update enquiry.'); } };
+  return <ProtectedRoute><AdminLayout><div className="mx-auto max-w-6xl"><div className="flex items-end justify-between gap-4"><div><p className="text-xs font-bold tracking-[.12em] text-primary">VSM FOR BUSINESS</p><h1 className="mt-1 text-2xl font-bold text-foreground">Corporate enquiries</h1><p className="mt-2 text-sm text-foreground-muted">Move each organisation from proposal to booking without mixing it into consumer packages.</p></div><button onClick={load} className="btn-silver px-3 py-2 text-xs"><RefreshCw size={14} className="mr-1" />Refresh</button></div>{items === null ? <div className="flex min-h-64 items-center justify-center text-sm text-foreground-muted"><Loader2 size={18} className="mr-2 animate-spin" />Loading enquiries…</div> : items.length === 0 ? <div className="mt-6 rounded-xl border border-border bg-card p-10 text-center"><Building2 size={28} className="mx-auto text-primary" /><h2 className="mt-3 text-base font-bold text-foreground">No corporate enquiries</h2><p className="mt-1 text-sm text-foreground-muted">Submitted VSM for Business briefs appear here.</p></div> : <div className="mt-6 grid gap-4">{items.map((item) => <article key={item.id} className="rounded-xl border border-border bg-card p-5 shadow-card"><div className="flex flex-col gap-4 sm:flex-row sm:justify-between"><div><p className="text-xs font-bold tracking-[.1em] text-primary">{item.organisation}</p><h2 className="mt-1 text-lg font-bold text-foreground">{item.eventName}</h2><p className="mt-1 text-sm text-foreground-muted">{item.contactName} · {item.email} · {item.phone}</p></div><label className="text-xs font-bold text-foreground-muted">STAGE<select value={item.stage} onChange={(event) => update(item.id, event.target.value as EnquiryStage)} className="input-luxury mt-1 block px-3 py-2 text-sm font-semibold text-foreground">{stages.map((stage) => <option key={stage}>{stage}</option>)}</select></label></div><div className="mt-5 grid gap-4 border-t border-border pt-4 md:grid-cols-3"><Detail label="Date and location" text={`${item.eventDate || 'Date to be confirmed'} · ${item.location}`} /><Detail label="Coverage" text={item.coverageNeeds} /><Detail label="Crew and deliverables" text={[item.crewNeeds, item.deliverables].filter(Boolean).join(' · ') || 'Not specified'} /></div></article>)}</div>}</div></AdminLayout></ProtectedRoute>;
+}
+function Detail({ label, text }: { label: string; text: string }) { return <div><p className="text-[10px] font-bold tracking-[.1em] text-foreground-muted">{label.toUpperCase()}</p><p className="mt-1 text-xs leading-5 text-foreground">{text}</p></div>; }

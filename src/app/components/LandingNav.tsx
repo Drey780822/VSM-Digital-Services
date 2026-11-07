@@ -93,7 +93,6 @@ export default function LandingNav() {
           }`}
         >
           <div className="flex items-center justify-between p-5 border-b border-border">
-            <span className="font-display text-lg text-gradient-gold font-semibold">VSM</span>
             <button
               onClick={() => setMobileOpen(false)}
               className="p-1.5 text-foreground-muted hover:text-primary transition-colors"
