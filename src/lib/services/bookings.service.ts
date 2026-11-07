@@ -97,7 +97,7 @@ export function mapBooking(row: Record<string, any>): BookingRecord {
   const venueAddress = row.venue_address || row.location || '';
   const clientName = row.customer_name || row.client || '';
   const totalAmount = Number(row.total_amount ?? 0);
-  const deposit = Number(row.deposit ?? totalAmount);
+  const deposit = Number(row.deposit_amount ?? row.deposit ?? totalAmount);
 
   return {
     id: row.id,
@@ -110,7 +110,7 @@ export function mapBooking(row: Record<string, any>): BookingRecord {
     idNumber: row.id_number ?? undefined,
     eventType: row.event_type || 'Wedding',
     packageId: row.package_id ?? undefined,
-    packageName: row.package_name || 'Custom Package',
+    packageName: row.package_name || (row.commercial_model === 'hourly' ? `${row.event_type} (Hourly)` : 'Custom Package'),
     eventDate: row.event_date || '',
     eventTime: row.event_time || '12:00',
     venueName,
