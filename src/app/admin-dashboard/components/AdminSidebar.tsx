@@ -20,6 +20,7 @@ import {
   AlertTriangle,
   FileText,
   Sparkles,
+  Package,
 } from 'lucide-react';
 import { fetchDashboardKPISummary } from '@/lib/services/analytics.service';
 import { useAuth } from '@/contexts/AuthContext';
@@ -63,6 +64,7 @@ export default function AdminSidebar({ collapsed, onCollapse, mobileOpen, onMobi
       items: [
         { id: 'nav-dashboard', icon: LayoutDashboard, label: 'Overview', href: '/admin-dashboard', badge: null },
         { id: 'nav-bookings', icon: Camera, label: 'Bookings', href: '/admin-dashboard/bookings', badge: badgeCounts.bookings },
+        { id: 'nav-packages', icon: Package, label: 'Packages', href: '/admin-dashboard/packages', badge: null },
         { id: 'nav-calendar', icon: Calendar, label: 'Calendar', href: '/admin-dashboard/calendar', badge: null },
         { id: 'nav-vaults', icon: Sparkles, label: 'Memory Vaults', href: '/admin-dashboard/vaults', badge: badgeCounts.vaults },
       ],

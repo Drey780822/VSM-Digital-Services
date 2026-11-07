@@ -12,21 +12,19 @@ interface Props {
   onBack: () => void;
 }
 
-const INTEREST_RATE = 0.18;
+import { calculateAmortization, formatZAR } from '@/lib/services/eligibility.engine';
+import { updateBookingStatus } from '@/lib/services/bookings.service';
+import { getClient } from '@/lib/services/supabase-helpers';
 
 export default function StepTerms({ data, updateData, onNext, onBack }: Props) {
   const [termsAccepted, setTermsAccepted] = useState(data.termsAccepted);
   const [debitAccepted, setDebitAccepted] = useState(data.debitOrderAccepted);
   const [submitting, setSubmitting] = useState(false);
 
-  const monthly = (() => {
-    if (!data.loanAmount || !data.term) return 0;
-    const r = INTEREST_RATE / 12;
-    return (data.loanAmount * r * Math.pow(1 + r, data.term)) / (Math.pow(1 + r, data.term) - 1);
-  })();
-
-  const totalRepay = monthly * data.term;
-  const totalInterest = totalRepay - data.loanAmount;
+  const amort = calculateAmortization(data.loanAmount, data.term, 18.0);
+  const monthly = amort.monthlyInstalment;
+  const totalRepay = amort.totalPayable;
+  const totalInterest = amort.totalInterest;
 
   const canSubmit = termsAccepted && debitAccepted;
 
@@ -45,18 +43,34 @@ export default function StepTerms({ data, updateData, onNext, onBack }: Props) {
         interestRate: 18.0,
         termMonths: data.term,
         purpose: data.purpose || 'Photography Financing',
+        loanType: data.loanType || (data.linkedBookingId ? 'photography' : 'personal'),
+        linkedBookingId: data.linkedBookingId,
+        verificationStatus: data.verificationStatus || 'verified',
         salary: data.salary || 0,
         expenses: data.expenses || 0,
-        employer: data.employer || 'Self-employed',
-        employmentType: data.employmentType || 'Standard',
+        employer: data.employer || 'Private Enterprise',
+        employmentType: data.employmentType || 'Full-Time',
         bankName: data.bankName || 'Standard Bank',
         accountNumber: data.accountNumber || '',
-        riskLevel: 'Low',
+        riskLevel: (data.expenses / (data.salary || 1)) > 0.6 ? 'Medium' : 'Low',
         status: 'Submitted',
       });
 
+      // If linked to a photography booking, ensure booking is marked as financed
+      if (data.linkedBookingId) {
+        try {
+          const supabase = getClient();
+          await supabase
+            .from('bookings')
+            .update({ financed: true })
+            .eq('id', data.linkedBookingId);
+        } catch {
+          // non-blocking if booking update fails
+        }
+      }
+
       updateData({ referenceNumber: created.referenceNumber });
-      toast.success('Loan application submitted to VSM Operations!');
+      toast.success('Loan application submitted to VSM Underwriting!');
       onNext();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to submit loan application');

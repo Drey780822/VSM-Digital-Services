@@ -1,8 +1,11 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { ArrowRight, User, Mail, Phone, CreditCard } from 'lucide-react';
+import { ArrowRight, User, Mail, Phone, CreditCard, CheckCircle, ShieldCheck } from 'lucide-react';
+import Link from 'next/link';
 import type { BookingFormData } from '@/lib/bookings/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Props {
   data: BookingFormData;
@@ -18,18 +21,35 @@ interface CustomerForm {
 }
 
 export default function StepCustomerInfo({ data, updateData, onNext }: Props) {
+  const { user } = useAuth();
+
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<CustomerForm>({
     defaultValues: {
-      fullName: data.fullName,
-      email: data.email,
+      fullName: data.fullName || (user?.user_metadata?.full_name as string) || '',
+      email: data.email || user?.email || '',
       phone: data.phone,
       idNumber: data.idNumber,
     },
   });
+
+  useEffect(() => {
+    if (user) {
+      if (!data.email && user.email) {
+        setValue('email', user.email);
+        updateData({ email: user.email });
+      }
+      const metaName = (user.user_metadata?.full_name as string) || '';
+      if (!data.fullName && metaName) {
+        setValue('fullName', metaName);
+        updateData({ fullName: metaName });
+      }
+    }
+  }, [user, data.email, data.fullName, setValue, updateData]);
 
   const onSubmit = (values: CustomerForm) => {
     updateData(values);
@@ -43,8 +63,30 @@ export default function StepCustomerInfo({ data, updateData, onNext }: Props) {
           Your Contact Details
         </h2>
         <p className="text-sm text-foreground-muted">
-          Tell us who to contact about your event. No account required.
+          Tell us who to contact about your event.
         </p>
+
+        {user ? (
+          <div className="mt-3 flex items-center gap-2 rounded-xl border border-success/30 bg-success/10 px-3.5 py-2 text-xs text-success">
+            <CheckCircle size={14} className="flex-shrink-0" />
+            <span>
+              Signed in as <strong>{user.email}</strong>. This booking will be linked to your VSM account.
+            </span>
+          </div>
+        ) : (
+          <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3.5 py-2 text-xs text-foreground">
+            <div className="flex items-center gap-2">
+              <ShieldCheck size={14} className="text-primary flex-shrink-0" />
+              <span>Have a VSM account? Sign in for 1-click booking and portal tracking.</span>
+            </div>
+            <Link
+              href="/auth/login?redirect=/book"
+              className="font-semibold text-primary hover:underline flex-shrink-0"
+            >
+              Sign In
+            </Link>
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">

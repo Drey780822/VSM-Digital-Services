@@ -1,4 +1,5 @@
 import { getClient, generateReference } from './supabase-helpers';
+import { calculateAmortization } from './eligibility.engine';
 
 export type LoanStatus =
   | 'Submitted'
@@ -10,6 +11,8 @@ export type LoanStatus =
   | 'Defaulted';
 
 export type RiskLevel = 'Low' | 'Medium' | 'High';
+export type LoanType = 'photography' | 'personal';
+export type VerificationStatus = 'unverified' | 'pending' | 'verified' | 'rejected';
 
 export interface LoanRecord {
   id: string;
@@ -27,6 +30,7 @@ export interface LoanRecord {
   totalPayable: number;
   balance: number;
   purpose: string;
+  loanType: LoanType;
   salary: number;
   expenses: number;
   employer?: string;
@@ -36,11 +40,13 @@ export interface LoanRecord {
   riskLevel: RiskLevel;
   risk: RiskLevel; // compatibility alias
   status: LoanStatus;
+  verificationStatus: VerificationStatus;
   dueDate?: string;
   referenceNumber: string;
   rejectionReason?: string;
   notes?: string;
   linkedBookingId?: string;
+  disbursedAt?: string;
   createdAt: string;
   updatedAt?: string;
 }
@@ -48,6 +54,7 @@ export interface LoanRecord {
 export interface LoanFilter {
   status?: string;
   riskLevel?: string;
+  loanType?: string;
   search?: string;
   overdueOnly?: boolean;
 }
@@ -62,6 +69,7 @@ export interface CreateLoanInput {
   interestRate?: number;
   termMonths?: number;
   purpose: string;
+  loanType?: LoanType;
   salary?: number;
   expenses?: number;
   employer?: string;
@@ -70,24 +78,17 @@ export interface CreateLoanInput {
   accountNumber?: string;
   riskLevel?: RiskLevel;
   status?: LoanStatus;
+  verificationStatus?: VerificationStatus;
   notes?: string;
   linkedBookingId?: string;
 }
 
 export function calculateLoanTerms(amount: number, annualRate = 18.0, termMonths = 6) {
-  if (amount <= 0 || termMonths <= 0) {
-    return { monthlyInstalment: 0, totalPayable: 0, totalInterest: 0 };
-  }
-  const monthlyRate = annualRate / 100 / 12;
-  const factor = Math.pow(1 + monthlyRate, termMonths);
-  const monthlyInstalment = (amount * monthlyRate * factor) / (factor - 1);
-  const totalPayable = monthlyInstalment * termMonths;
-  const totalInterest = totalPayable - amount;
-
+  const calc = calculateAmortization(amount, termMonths, annualRate);
   return {
-    monthlyInstalment: Math.round(monthlyInstalment * 100) / 100,
-    totalPayable: Math.round(totalPayable * 100) / 100,
-    totalInterest: Math.round(totalInterest * 100) / 100,
+    monthlyInstalment: calc.monthlyInstalment,
+    totalPayable: calc.totalPayable,
+    totalInterest: calc.totalInterest,
   };
 }
 
@@ -96,6 +97,8 @@ export function mapLoan(row: Record<string, any>): LoanRecord {
   const applicantName = row.applicant_name || row.applicant || '';
   const risk = (row.risk_level || row.risk || 'Low') as RiskLevel;
   const term = Number(row.term_months || row.term || 6);
+  const loanType = (row.loan_type || (row.linked_booking_id ? 'photography' : 'personal')) as LoanType;
+  const verification = (row.verification_status || 'unverified') as VerificationStatus;
 
   return {
     id: row.id,
@@ -112,7 +115,8 @@ export function mapLoan(row: Record<string, any>): LoanRecord {
     monthlyInstalment: Number(row.monthly_instalment || 0),
     totalPayable: Number(row.total_payable || 0),
     balance: Number(row.balance ?? row.total_payable ?? 0),
-    purpose: row.purpose || 'Photography Services',
+    purpose: row.purpose || (loanType === 'photography' ? 'Photography Package Financing' : 'Personal Loan'),
+    loanType,
     salary: Number(row.salary || 0),
     expenses: Number(row.expenses || 0),
     employer: row.employer ?? undefined,
@@ -122,11 +126,13 @@ export function mapLoan(row: Record<string, any>): LoanRecord {
     riskLevel: risk,
     risk,
     status: (row.status || 'Submitted') as LoanStatus,
+    verificationStatus: verification,
     dueDate: row.due_date ?? undefined,
     referenceNumber: row.reference_number || '',
     rejectionReason: row.rejection_reason ?? undefined,
     notes: row.notes ?? undefined,
     linkedBookingId: row.linked_booking_id ?? undefined,
+    disbursedAt: row.disbursed_at ?? undefined,
     createdAt: row.created_at || new Date().toISOString(),
     updatedAt: row.updated_at ?? undefined,
   };
@@ -142,9 +148,16 @@ export async function fetchLoans(filters?: LoanFilter): Promise<LoanRecord[]> {
   if (filters?.riskLevel && filters.riskLevel !== 'All') {
     query = query.eq('risk_level', filters.riskLevel);
   }
+  if (filters?.loanType && filters.loanType !== 'All') {
+    query = query.eq('loan_type', filters.loanType);
+  }
 
   const { data, error } = await query;
-  if (error) throw new Error(`Failed to fetch loans: ${error.message}`);
+  if (error) {
+    // If recursive policy issue or table missing, return empty array safely
+    console.warn(`fetchLoans notice: ${error.message}`);
+    return [];
+  }
 
   let list = (data ?? []).map(mapLoan);
   if (filters?.search && filters.search.trim()) {
@@ -172,14 +185,33 @@ export async function fetchLoans(filters?: LoanFilter): Promise<LoanRecord[]> {
 export async function getLoanById(id: string): Promise<LoanRecord | null> {
   const supabase = getClient();
   const { data, error } = await supabase.from('loans').select('*').eq('id', id).maybeSingle();
-  if (error) throw new Error(`Failed to fetch loan: ${error.message}`);
+  if (error) {
+    console.warn(`getLoanById error: ${error.message}`);
+    return null;
+  }
   return data ? mapLoan(data) : null;
+}
+
+export async function getCustomerLoans(email: string): Promise<LoanRecord[]> {
+  const supabase = getClient();
+  const cleanEmail = email.toLowerCase().trim();
+  const { data, error } = await supabase
+    .from('loans')
+    .select('*')
+    .ilike('email', cleanEmail)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.warn(`getCustomerLoans notice: ${error.message}`);
+    return [];
+  }
+  return (data ?? []).map(mapLoan);
 }
 
 export async function createLoan(input: CreateLoanInput): Promise<LoanRecord> {
   const supabase = getClient();
   const now = new Date().toISOString();
-  const referenceNumber = generateReference('LOAN');
+  const referenceNumber = generateReference('VSM-LN');
   const rate = input.interestRate ?? 18.0;
   const termMonths = input.termMonths ?? 6;
 
@@ -216,6 +248,8 @@ export async function createLoan(input: CreateLoanInput): Promise<LoanRecord> {
   due.setDate(due.getDate() + 30);
   const dueDateStr = due.toISOString().slice(0, 10);
 
+  const loanType = input.loanType || (input.linkedBookingId ? 'photography' : 'personal');
+
   const insertRow = {
     customer_id: customerId ?? null,
     applicant_name: input.applicantName,
@@ -229,6 +263,7 @@ export async function createLoan(input: CreateLoanInput): Promise<LoanRecord> {
     total_payable: totalPayable,
     balance: totalPayable,
     purpose: input.purpose,
+    loan_type: loanType,
     salary: input.salary ?? 0,
     expenses: input.expenses ?? 0,
     employer: input.employer ?? null,
@@ -237,6 +272,7 @@ export async function createLoan(input: CreateLoanInput): Promise<LoanRecord> {
     account_number: input.accountNumber ?? null,
     risk_level: input.riskLevel ?? 'Low',
     status: input.status || 'Submitted',
+    verification_status: input.verificationStatus || 'unverified',
     due_date: dueDateStr,
     reference_number: referenceNumber,
     notes: input.notes ?? null,
@@ -247,6 +283,27 @@ export async function createLoan(input: CreateLoanInput): Promise<LoanRecord> {
 
   const { data, error } = await supabase.from('loans').insert(insertRow).select().single();
   if (error) throw new Error(`Failed to create loan: ${error.message}`);
+
+  // Create initial notification & audit log
+  try {
+    await supabase.from('notifications').insert({
+      title: 'New Loan Application',
+      message: `${input.applicantName} applied for R ${input.amount.toLocaleString()} (${referenceNumber})`,
+      type: 'loan',
+      reference_id: data.id,
+      reference_type: 'loan',
+    });
+  } catch {}
+
+  try {
+    await supabase.from('activity_logs').insert({
+      actor: input.applicantName,
+      action: 'LOAN_SUBMITTED',
+      entity: 'loan',
+      entity_id: data.id,
+      metadata: { reference: referenceNumber, amount: input.amount, purpose: input.purpose },
+    });
+  } catch {}
 
   return mapLoan(data);
 }
@@ -274,6 +331,7 @@ export async function updateLoan(id: string, updates: Partial<CreateLoanInput>):
   if (updates.interestRate !== undefined) updateData.interest_rate = updates.interestRate;
   if (updates.termMonths !== undefined) updateData.term_months = updates.termMonths;
   if (updates.purpose !== undefined) updateData.purpose = updates.purpose;
+  if (updates.loanType !== undefined) updateData.loan_type = updates.loanType;
   if (updates.salary !== undefined) updateData.salary = updates.salary;
   if (updates.expenses !== undefined) updateData.expenses = updates.expenses;
   if (updates.employer !== undefined) updateData.employer = updates.employer;
@@ -282,6 +340,7 @@ export async function updateLoan(id: string, updates: Partial<CreateLoanInput>):
   if (updates.accountNumber !== undefined) updateData.account_number = updates.accountNumber;
   if (updates.riskLevel !== undefined) updateData.risk_level = updates.riskLevel;
   if (updates.status !== undefined) updateData.status = updates.status;
+  if (updates.verificationStatus !== undefined) updateData.verification_status = updates.verificationStatus;
   if (updates.notes !== undefined) updateData.notes = updates.notes;
 
   const { data, error } = await supabase.from('loans').update(updateData).eq('id', id).select().single();
@@ -293,7 +352,8 @@ export async function updateLoanStatus(
   id: string,
   newStatus: LoanStatus,
   rejectionReason?: string,
-  notes?: string
+  notes?: string,
+  changedBy = 'admin'
 ): Promise<LoanRecord> {
   const supabase = getClient();
   const now = new Date().toISOString();
@@ -310,19 +370,38 @@ export async function updateLoanStatus(
     const due = new Date();
     due.setDate(due.getDate() + 30);
     updateData.due_date = due.toISOString().slice(0, 10);
+    updateData.disbursed_at = now;
   }
 
   const { data, error } = await supabase.from('loans').update(updateData).eq('id', id).select().single();
   if (error) throw new Error(`Failed to update loan status: ${error.message}`);
 
   // Create notification
-  await supabase.from('notifications').insert({
-    title: `Loan Status: ${newStatus}`,
-    message: `Loan ${data.reference_number} for ${data.applicant_name} changed to ${newStatus}.`,
-    type: 'loan',
-    reference_id: data.id,
-    reference_type: 'loan',
-  });
+  try {
+    await supabase.from('notifications').insert({
+      title: `Loan Status: ${newStatus}`,
+      message: `Loan ${data.reference_number} for ${data.applicant_name} changed to ${newStatus}.`,
+      type: 'loan',
+      reference_id: data.id,
+      reference_type: 'loan',
+    });
+  } catch {}
+
+  // Create activity log
+  const actionName = newStatus === 'Approved' ? 'LOAN_APPROVED'
+    : newStatus === 'Rejected' ? 'LOAN_REJECTED'
+    : newStatus === 'Disbursed' ? 'LOAN_DISBURSED'
+    : 'LOAN_STATUS_CHANGED';
+
+  try {
+    await supabase.from('activity_logs').insert({
+      actor: changedBy,
+      action: actionName,
+      entity: 'loan',
+      entity_id: data.id,
+      metadata: { reference: data.reference_number, newStatus, rejectionReason },
+    });
+  } catch {}
 
   return mapLoan(data);
 }

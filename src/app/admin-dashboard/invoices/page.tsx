@@ -34,6 +34,8 @@ import { formatCurrency, formatDate } from '@/lib/services/supabase-helpers';
 const INVOICE_STATUS_BADGES: Record<InvoiceStatus, string> = {
   Draft: 'bg-muted text-foreground-muted border-border',
   Sent: 'bg-info/15 text-info border-info/30',
+  Issued: 'bg-primary/15 text-primary border-primary/30',
+  'Partially Paid': 'bg-warning/15 text-warning border-warning/30',
   Paid: 'bg-success/15 text-success border-success/30',
   Overdue: 'bg-danger/15 text-danger border-danger/30',
   Cancelled: 'bg-muted text-foreground-muted border-border',

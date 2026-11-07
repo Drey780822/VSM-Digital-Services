@@ -99,19 +99,48 @@ export default function StepBookingConfirmation({ data }: Props) {
         ))}
       </div>
 
+      {/* Smart Financing Action Box if Financed */}
+      {data.paymentPreference === 'finance' ? (
+        <div className="mb-6 p-5 rounded-2xl border-2 border-gold-strong bg-gradient-to-r from-primary/10 via-background to-primary/5 text-left glow-gold">
+          <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider mb-2">
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            Next Step: Smart Financing Pre-Approval
+          </div>
+          <h3 className="font-display text-lg font-semibold text-foreground mb-1">
+            Complete Your Package Loan Application
+          </h3>
+          <p className="text-xs text-foreground-muted leading-relaxed mb-4">
+            Your booking reference <strong className="text-foreground">{data.referenceNumber}</strong> has been linked. Submit your 2-minute affordability check to finalize your event date reservation.
+          </p>
+          <Link
+            href={`/loan-application-flow?package=${encodeURIComponent(data.packageId)}&amount=${data.packagePrice}&term=${data.financeTerm || 6}&bookingId=${encodeURIComponent(data.bookingId || '')}&bookingRef=${encodeURIComponent(data.referenceNumber)}&name=${encodeURIComponent(data.fullName)}&email=${encodeURIComponent(data.email)}&phone=${encodeURIComponent(data.phone)}&idNumber=${encodeURIComponent(data.idNumber)}`}
+            className="btn-gold w-full py-3.5 text-sm font-bold rounded-md flex items-center justify-center gap-2 shadow-lg"
+          >
+            Apply for Package Financing Now
+            <ExternalLink size={15} />
+          </Link>
+        </div>
+      ) : null}
+
       <div className="flex flex-col sm:flex-row gap-3">
         <Link
           href={trackUrl}
-          className="btn-gold flex-1 py-3 text-sm font-semibold rounded-md flex items-center justify-center gap-2"
+          className={data.paymentPreference === 'finance' ? 'btn-silver flex-1 py-3 text-sm font-medium rounded-md flex items-center justify-center gap-2' : 'btn-gold flex-1 py-3 text-sm font-semibold rounded-md flex items-center justify-center gap-2'}
         >
           <ExternalLink size={15} />
           Track My Booking
         </Link>
         <Link
-          href="/"
+          href={`/portal?email=${encodeURIComponent(data.email)}`}
           className="btn-silver flex-1 py-3 text-sm font-medium rounded-md flex items-center justify-center"
         >
-          Back to Home
+          Customer Portal
+        </Link>
+        <Link
+          href="/"
+          className="btn-silver py-3 px-4 text-sm font-medium rounded-md flex items-center justify-center"
+        >
+          Home
         </Link>
       </div>
 

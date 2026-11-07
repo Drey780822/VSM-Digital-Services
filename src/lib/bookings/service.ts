@@ -20,7 +20,12 @@ export {
   type BookingStatusHistoryEntry,
 };
 
+import { calculateBookingTotal } from './constants';
+
 export async function createBooking(payload: CreateBookingPayload): Promise<BookingRecord> {
+  const isFinanced = Boolean(payload.financed || payload.paymentPreference === 'finance');
+  const total = calculateBookingTotal(payload.packagePrice, payload.addons);
+
   return createBookingInternal({
     customerName: payload.fullName,
     email: payload.email,
@@ -35,9 +40,11 @@ export async function createBooking(payload: CreateBookingPayload): Promise<Book
     venueAddress: payload.venueAddress,
     guestCount: payload.guestCount,
     addons: payload.addons,
-    totalAmount: payload.packagePrice,
-    deposit: payload.packagePrice,
+    totalAmount: total,
+    deposit: total,
     notes: payload.notes,
+    financed: isFinanced,
+    paymentStatus: isFinanced ? 'Unpaid' : 'Unpaid',
   });
 }
 
@@ -61,14 +68,33 @@ export async function getBookingByReference(
   return data ? mapBooking(data) : null;
 }
 
-export async function getCustomerBookings(email: string): Promise<BookingRecord[]> {
+export async function getCustomerBookings(
+  email?: string,
+  userId?: string
+): Promise<BookingRecord[]> {
   const supabase = getClient();
-  const { data, error } = await supabase
-    .from('bookings')
-    .select('*')
-    .ilike('email', email.trim())
-    .order('event_date', { ascending: false });
+  let query = supabase.from('bookings').select('*');
 
+  if (userId) {
+    if (email && email.trim()) {
+      query = query.or(`user_id.eq.${userId},email.ilike.${email.trim().toLowerCase()}`);
+    } else {
+      query = query.eq('user_id', userId);
+    }
+  } else if (email && email.trim()) {
+    query = query.ilike('email', email.trim().toLowerCase());
+  } else {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      query = query.or(`user_id.eq.${user.id},email.ilike.${user.email}`);
+    } else {
+      return [];
+    }
+  }
+
+  const { data, error } = await query.order('event_date', { ascending: false });
   if (error) throw new Error(`Customer bookings lookup failed: ${error.message}`);
   return (data ?? []).map(mapBooking);
 }

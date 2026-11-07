@@ -21,12 +21,17 @@ export interface LoanData {
   phone: string;
   emailVerified: boolean;
   phoneVerified: boolean;
+  verificationStatus: 'unverified' | 'pending' | 'verified' | 'rejected';
   salary: number;
   expenses: number;
   qualifiedAmount: number;
   loanAmount: number;
   term: number;
   purpose: string;
+  loanType: 'photography' | 'personal';
+  linkedBookingId?: string;
+  linkedBookingRef?: string;
+  packageSlug?: string;
   firstName: string;
   lastName: string;
   idNumber: string;
@@ -39,32 +44,67 @@ export interface LoanData {
   referenceNumber: string;
 }
 
-const initialData: LoanData = {
-  email: '',
-  phone: '',
-  emailVerified: false,
-  phoneVerified: false,
-  salary: 0,
-  expenses: 0,
-  qualifiedAmount: 0,
-  loanAmount: 0,
-  term: 6,
-  purpose: '',
-  firstName: '',
-  lastName: '',
-  idNumber: '',
-  employer: '',
-  employmentType: '',
-  bankName: '',
-  accountNumber: '',
-  termsAccepted: false,
-  debitOrderAccepted: false,
-  referenceNumber: '',
-};
+interface InitialParams {
+  package?: string;
+  amount?: string;
+  term?: string;
+  bookingId?: string;
+  bookingRef?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  idNumber?: string;
+  type?: string;
+}
 
-export default function LoanWizard() {
+interface Props {
+  initialParams?: InitialParams;
+}
+
+function buildInitialLoanData(params?: InitialParams): LoanData {
+  const nameParts = (params?.name || '').trim().split(' ');
+  const firstName = nameParts[0] || '';
+  const lastName = nameParts.slice(1).join(' ') || '';
+  const amount = Number(params?.amount) || 0;
+  const term = Number(params?.term) || 6;
+  const isPhotography = Boolean(params?.package || params?.bookingId || params?.type === 'photography');
+
+  return {
+    email: params?.email || '',
+    phone: params?.phone || '',
+    emailVerified: Boolean(params?.email),
+    phoneVerified: Boolean(params?.phone),
+    verificationStatus: 'unverified',
+    salary: 0,
+    expenses: 0,
+    qualifiedAmount: amount > 0 ? amount : 0,
+    loanAmount: amount,
+    term: term > 0 ? term : 6,
+    purpose: params?.package
+      ? `Photography Package Financing: ${params.package}`
+      : isPhotography
+      ? 'Photography & Videography Financing'
+      : 'Personal Loan',
+    loanType: isPhotography ? 'photography' : 'personal',
+    linkedBookingId: params?.bookingId || undefined,
+    linkedBookingRef: params?.bookingRef || undefined,
+    packageSlug: params?.package || undefined,
+    firstName,
+    lastName,
+    idNumber: params?.idNumber || '',
+    employer: '',
+    employmentType: 'Full-Time',
+    bankName: 'Standard Bank',
+    accountNumber: '',
+    termsAccepted: false,
+    debitOrderAccepted: false,
+    referenceNumber: '',
+  };
+}
+
+export default function LoanWizard({ initialParams }: Props) {
   const [step, setStep] = useState(1);
-  const [data, setData] = useState<LoanData>(initialData);
+  const [data, setData] = useState<LoanData>(() => buildInitialLoanData(initialParams));
 
   const updateData = (updates: Partial<LoanData>) => setData((d) => ({ ...d, ...updates }));
 

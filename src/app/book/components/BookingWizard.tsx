@@ -19,7 +19,7 @@ const STEPS = [
   { id: 'step-confirm', number: 5, label: 'Confirmed' },
 ];
 
-function buildInitialData(packageSlug?: string): BookingFormData {
+function buildInitialData(packageSlug?: string, initialMode: 'direct' | 'finance' = 'direct'): BookingFormData {
   const pkg = packageSlug ? getPackageBySlug(packageSlug) : undefined;
   return {
     fullName: '',
@@ -39,21 +39,60 @@ function buildInitialData(packageSlug?: string): BookingFormData {
     notes: '',
     referenceNumber: '',
     trackingNumber: '',
+    bookingId: '',
+    paymentPreference: initialMode,
+    financeTerm: 6,
   };
 }
 
 interface Props {
   initialPackage?: string;
+  initialMode?: 'direct' | 'finance';
 }
 
-export default function BookingWizard({ initialPackage }: Props) {
+const DRAFT_KEY = 'vsm_booking_draft_v1';
+
+export default function BookingWizard({ initialPackage, initialMode = 'direct' }: Props) {
   const [step, setStep] = useState(1);
-  const [data, setData] = useState<BookingFormData>(() => buildInitialData(initialPackage));
+  const [data, setData] = useState<BookingFormData>(() => {
+    const initial = buildInitialData(initialPackage, initialMode);
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = sessionStorage.getItem(DRAFT_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          return { ...initial, ...parsed };
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return initial;
+  });
 
-  const updateData = (updates: Partial<BookingFormData>) =>
-    setData((current) => ({ ...current, ...updates }));
+  const updateData = (updates: Partial<BookingFormData>) => {
+    setData((current) => {
+      const nextData = { ...current, ...updates };
+      if (typeof window !== 'undefined') {
+        try {
+          sessionStorage.setItem(DRAFT_KEY, JSON.stringify(nextData));
+        } catch {
+          // ignore
+        }
+      }
+      return nextData;
+    });
+  };
 
-  const next = () => setStep((s) => Math.min(5, s + 1));
+  const next = () => {
+    setStep((s) => {
+      const nextStep = Math.min(5, s + 1);
+      if (nextStep === 5 && typeof window !== 'undefined') {
+        sessionStorage.removeItem(DRAFT_KEY);
+      }
+      return nextStep;
+    });
+  };
   const back = () => setStep((s) => Math.max(1, s - 1));
 
   return (

@@ -16,6 +16,7 @@ export type PaymentStatus = 'Unpaid' | 'Deposit Paid' | 'Fully Paid' | 'Refunded
 
 export interface BookingRecord {
   id: string;
+  userId?: string;
   customerId?: string;
   customerName: string;
   client: string; // compatibility alias
@@ -37,7 +38,9 @@ export interface BookingRecord {
   status: BookingStatus;
   paymentStatus: PaymentStatus;
   financed: boolean;
+  financedLoanId?: string;
   referenceNumber: string;
+  tracking_number?: string;
   trackingNumber: string;
   notes?: string;
   createdAt: string;
@@ -64,6 +67,7 @@ export interface BookingFilter {
 }
 
 export interface CreateBookingInput {
+  userId?: string;
   customerId?: string;
   customerName: string;
   email: string;
@@ -83,6 +87,7 @@ export interface CreateBookingInput {
   status?: BookingStatus;
   paymentStatus?: PaymentStatus;
   financed?: boolean;
+  financedLoanId?: string;
   notes?: string;
 }
 
@@ -96,6 +101,7 @@ export function mapBooking(row: Record<string, any>): BookingRecord {
 
   return {
     id: row.id,
+    userId: row.user_id ?? undefined,
     customerId: row.customer_id ?? undefined,
     customerName: clientName,
     client: clientName,
@@ -109,7 +115,7 @@ export function mapBooking(row: Record<string, any>): BookingRecord {
     eventTime: row.event_time || '12:00',
     venueName,
     venueAddress,
-    location: venueAddress || venueName || 'TBD',
+    location: venueAddress || venueName || 'TBD Venue',
     guestCount: Number(row.guest_count ?? 0),
     addons: Array.isArray(row.addons) ? row.addons : [],
     totalAmount,
@@ -117,6 +123,7 @@ export function mapBooking(row: Record<string, any>): BookingRecord {
     status: (row.status || 'Submitted') as BookingStatus,
     paymentStatus: (row.payment_status || 'Unpaid') as PaymentStatus,
     financed: Boolean(row.financed),
+    financedLoanId: row.financed_loan_id ?? row.linked_loan_id ?? undefined,
     referenceNumber: row.reference_number || '',
     trackingNumber: row.tracking_number || '',
     notes: row.notes ?? undefined,
@@ -146,7 +153,10 @@ export async function fetchBookings(filters?: BookingFilter): Promise<BookingRec
   }
 
   const { data, error } = await query;
-  if (error) throw new Error(`Failed to fetch bookings: ${error.message}`);
+  if (error) {
+    console.warn(`fetchBookings notice: ${error.message}`);
+    return [];
+  }
 
   let list = (data ?? []).map(mapBooking);
   if (filters?.search && filters.search.trim()) {
@@ -167,23 +177,104 @@ export async function fetchBookings(filters?: BookingFilter): Promise<BookingRec
 export async function getBookingById(id: string): Promise<BookingRecord | null> {
   const supabase = getClient();
   const { data, error } = await supabase.from('bookings').select('*').eq('id', id).maybeSingle();
-  if (error) throw new Error(`Failed to fetch booking: ${error.message}`);
+  if (error) {
+    console.warn(`getBookingById notice: ${error.message}`);
+    return null;
+  }
+  return data ? mapBooking(data) : null;
+}
+
+export async function getCustomerBookings(email: string): Promise<BookingRecord[]> {
+  const supabase = getClient();
+  const cleanEmail = email.toLowerCase().trim();
+
+  // Try RPC first (bypasses potential RLS recursion)
+  try {
+    const { data: rpcData, error: rpcErr } = await supabase.rpc('get_customer_bookings', {
+      p_email: cleanEmail,
+    });
+    if (!rpcErr && rpcData && Array.isArray(rpcData)) {
+      return rpcData.map(mapBooking);
+    }
+  } catch {
+    // fallback to direct query
+  }
+
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*')
+    .ilike('email', cleanEmail)
+    .order('event_date', { ascending: false });
+
+  if (error) {
+    console.warn(`getCustomerBookings notice: ${error.message}`);
+    return [];
+  }
+
+  return (data ?? []).map(mapBooking);
+}
+
+export async function getBookingByReference(
+  reference: string,
+  email: string
+): Promise<BookingRecord | null> {
+  const supabase = getClient();
+  const cleanRef = reference.trim();
+  const cleanEmail = email.toLowerCase().trim();
+
+  try {
+    const { data: rpcData, error: rpcErr } = await supabase.rpc('get_booking_by_reference', {
+      p_reference: cleanRef,
+      p_email: cleanEmail,
+    });
+    if (!rpcErr && rpcData && rpcData.length > 0) {
+      return mapBooking(rpcData[0]);
+    }
+  } catch {
+    // fallback
+  }
+
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*')
+    .ilike('reference_number', cleanRef)
+    .ilike('email', cleanEmail)
+    .maybeSingle();
+
+  if (error) {
+    console.warn(`getBookingByReference notice: ${error.message}`);
+    return null;
+  }
+
   return data ? mapBooking(data) : null;
 }
 
 export async function createBooking(input: CreateBookingInput): Promise<BookingRecord> {
   const supabase = getClient();
+
+  // 1. Explicitly validate that an authenticated user exists
+  // Derive user ID directly from authenticated session; do NOT trust client-supplied user_id
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  const authenticatedUser = authData?.user;
+
+  if (!authenticatedUser || authError) {
+    throw new Error('Please sign in before creating a booking.');
+  }
+
+  const authenticatedUserId = authenticatedUser.id;
   const now = new Date().toISOString();
-  const referenceNumber = generateReference('VSM');
+  const referenceNumber = generateReference('VSM-BK');
   const trackingNumber = generateReference('TRK');
 
-  // Upsert customer record
+  // 2. Deduplicate/Upsert customer record
   let customerId = input.customerId;
-  if (!customerId && input.email) {
+  const cleanEmail = (input.email || authenticatedUser.email || '').toLowerCase().trim();
+
+  if (!customerId && cleanEmail) {
     const { data: existingCust } = await supabase
       .from('customers')
       .select('id')
-      .eq('email', input.email.toLowerCase().trim())
+      .eq('email', cleanEmail)
       .maybeSingle();
 
     if (existingCust?.id) {
@@ -192,8 +283,8 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
       const { data: newCust } = await supabase
         .from('customers')
         .insert({
-          full_name: input.customerName,
-          email: input.email.toLowerCase().trim(),
+          full_name: input.customerName || (authenticatedUser.user_metadata?.full_name as string) || 'Valued Client',
+          email: cleanEmail,
           phone: input.phone,
           id_number: input.idNumber ?? null,
           address: input.venueAddress ?? null,
@@ -204,20 +295,24 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
     }
   }
 
+  const isValidUUID = (str?: string) =>
+    Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+
   const insertRow = {
+    user_id: authenticatedUserId,
     customer_id: customerId ?? null,
-    customer_name: input.customerName,
-    email: input.email.toLowerCase().trim(),
-    phone: input.phone,
+    customer_name: input.customerName || (authenticatedUser.user_metadata?.full_name as string) || 'Valued Client',
+    email: cleanEmail,
+    phone: input.phone || null,
     id_number: input.idNumber ?? null,
-    event_type: input.eventType,
-    package_id: input.packageId ?? null,
-    package_name: input.packageName,
+    event_type: input.eventType || 'Wedding',
+    package_id: isValidUUID(input.packageId) ? input.packageId : null,
+    package_name: input.packageName || 'Custom Package',
     event_date: input.eventDate,
     event_time: input.eventTime || '12:00',
     venue_name: input.venueName || 'Venue',
     venue_address: input.venueAddress || '',
-    location: input.venueAddress || input.venueName || '',
+    location: input.venueAddress || input.venueName || 'Venue',
     guest_count: input.guestCount || 0,
     addons: input.addons || [],
     total_amount: input.totalAmount,
@@ -233,17 +328,46 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
   };
 
   const { data, error } = await supabase.from('bookings').insert(insertRow).select().single();
-  if (error) throw new Error(`Failed to create booking: ${error.message}`);
+  if (error) {
+    if (error.message?.includes('user_id') && error.message?.includes('not-null constraint')) {
+      throw new Error('Please sign in before creating a booking.');
+    }
+    throw new Error(`Failed to create booking: ${error.message}`);
+  }
 
-  // Add initial status history
-  await supabase.from('booking_status_history').insert({
-    booking_id: data.id,
-    from_status: null,
-    to_status: data.status,
-    notes: 'Booking created',
-    changed_by: 'admin',
-    created_at: now,
-  });
+  // Add initial status history entry
+  try {
+    await supabase.from('booking_status_history').insert({
+      booking_id: data.id,
+      from_status: null,
+      to_status: data.status,
+      notes: 'Booking created',
+      changed_by: 'customer',
+      created_at: now,
+    });
+  } catch {}
+
+  // Add notification for Operations
+  try {
+    await supabase.from('notifications').insert({
+      title: 'New Booking Created',
+      message: `${input.customerName} booked ${input.packageName} for ${input.eventDate} (${referenceNumber})`,
+      type: 'booking',
+      reference_id: data.id,
+      reference_type: 'booking',
+    });
+  } catch {}
+
+  // Add activity log
+  try {
+    await supabase.from('activity_logs').insert({
+      actor: input.customerName,
+      action: 'BOOKING_CREATED',
+      entity: 'booking',
+      entity_id: data.id,
+      metadata: { reference: referenceNumber, package: input.packageName, total: input.totalAmount },
+    });
+  } catch {}
 
   return mapBooking(data);
 }
@@ -280,6 +404,7 @@ export async function updateBooking(
   if (updates.status !== undefined) updateData.status = updates.status;
   if (updates.paymentStatus !== undefined) updateData.payment_status = updates.paymentStatus;
   if (updates.financed !== undefined) updateData.financed = updates.financed;
+  if (updates.financedLoanId !== undefined) updateData.financed_loan_id = updates.financedLoanId;
   if (updates.notes !== undefined) updateData.notes = updates.notes;
 
   const { data, error } = await supabase
@@ -318,14 +443,38 @@ export async function updateBookingStatus(
 
   if (error) throw new Error(`Failed to update booking status: ${error.message}`);
 
-  await supabase.from('booking_status_history').insert({
-    booking_id: bookingId,
-    from_status: fromStatus,
-    to_status: newStatus,
-    notes: notes ?? null,
-    changed_by: changedBy,
-    created_at: now,
-  });
+  try {
+    await supabase.from('booking_status_history').insert({
+      booking_id: bookingId,
+      from_status: fromStatus,
+      to_status: newStatus,
+      notes: notes ?? null,
+      changed_by: changedBy,
+      created_at: now,
+    });
+  } catch {}
+
+  // Create activity log
+  try {
+    await supabase.from('activity_logs').insert({
+      actor: changedBy,
+      action: 'BOOKING_STATUS_CHANGED',
+      entity: 'booking',
+      entity_id: bookingId,
+      metadata: { reference: current.referenceNumber, fromStatus, toStatus: newStatus, notes },
+    });
+  } catch {}
+
+  // Create notification
+  try {
+    await supabase.from('notifications').insert({
+      title: `Booking Status: ${newStatus}`,
+      message: `Booking ${current.referenceNumber} (${current.customerName}) moved to ${newStatus}.`,
+      type: 'booking',
+      reference_id: bookingId,
+      reference_type: 'booking',
+    });
+  } catch {}
 
   return mapBooking(data);
 }
@@ -344,7 +493,11 @@ export async function getBookingStatusHistory(bookingId: string): Promise<Bookin
     .eq('booking_id', bookingId)
     .order('created_at', { ascending: true });
 
-  if (error) throw new Error(`Failed to fetch status history: ${error.message}`);
+  if (error) {
+    console.warn(`getBookingStatusHistory notice: ${error.message}`);
+    return [];
+  }
+
   return (data ?? []).map((row) => ({
     id: row.id,
     bookingId: row.booking_id,

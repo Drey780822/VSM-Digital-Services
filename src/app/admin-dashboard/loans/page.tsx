@@ -19,6 +19,9 @@ import {
   Loader2,
   Download,
   Trash2,
+  ShieldCheck,
+  Building2,
+  Calendar as CalendarIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -73,6 +76,13 @@ function LoansContent() {
   const [selectedLoan, setSelectedLoan] = useState<LoanRecord | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  // Approval & Rejection Underwriting Modals
+  const [approvalModalOpen, setApprovalModalOpen] = useState(false);
+  const [approvalComplianceChecked, setApprovalComplianceChecked] = useState(false);
+  const [rejectionModalOpen, setRejectionModalOpen] = useState(false);
+  const [rejectionReasonPreset, setRejectionReasonPreset] = useState('DTI exceeds regulatory limit (40%)');
+  const [rejectionReasonCustom, setRejectionReasonCustom] = useState('');
 
   // New Loan Form state
   const [formData, setFormData] = useState({
@@ -462,7 +472,10 @@ function LoansContent() {
               <div className="flex flex-wrap gap-2">
                 {selectedLoan.status !== 'Approved' && selectedLoan.status !== 'Disbursed' && selectedLoan.status !== 'Repaid' && (
                   <button
-                    onClick={() => handleStatusUpdate('Approved')}
+                    onClick={() => {
+                      setApprovalComplianceChecked(false);
+                      setApprovalModalOpen(true);
+                    }}
                     className="btn-gold px-3.5 py-2 text-xs font-semibold rounded-lg flex items-center gap-1.5"
                   >
                     <CheckCircle size={14} />
@@ -483,8 +496,9 @@ function LoansContent() {
                 {selectedLoan.status !== 'Rejected' && selectedLoan.status !== 'Repaid' && (
                   <button
                     onClick={() => {
-                      const reason = prompt('Enter rejection reason:');
-                      if (reason) handleStatusUpdate('Rejected', reason);
+                      setRejectionReasonPreset('DTI exceeds regulatory limit (40%)');
+                      setRejectionReasonCustom('');
+                      setRejectionModalOpen(true);
                     }}
                     className="btn-silver px-3.5 py-2 text-xs font-medium rounded-lg text-danger hover:text-danger hover:border-danger/40 flex items-center gap-1.5"
                   >
@@ -708,6 +722,204 @@ function LoansContent() {
                 className="btn-gold flex-1 py-2 text-xs font-semibold rounded-lg bg-danger hover:bg-danger/90 text-white"
               >
                 Confirm Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Financial Disclosure & Approval Modal */}
+      {approvalModalOpen && selectedLoan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setApprovalModalOpen(false)} />
+          <div className="relative w-full max-w-lg bg-card border border-border rounded-2xl shadow-card-hover p-6 z-10 space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                  <ShieldCheck size={20} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">Underwriting Approval & Financial Disclosure</h3>
+                  <p className="text-[11px] text-foreground-muted">NCR Statutory Pre-Agreement & Repayment Schedule</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setApprovalModalOpen(false)}
+                className="p-1 rounded text-foreground-muted hover:text-foreground"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Financial Terms Schedule */}
+            <div className="bg-muted/30 border border-border rounded-xl p-3.5 space-y-2 text-xs">
+              <div className="flex justify-between items-center pb-2 border-b border-border">
+                <span className="text-foreground-muted">Applicant Name:</span>
+                <span className="font-bold text-foreground">{selectedLoan.applicantName}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-foreground-muted">National ID / FICA:</span>
+                <span className="font-mono text-foreground">{selectedLoan.idNumber || 'Verified on Record'}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-foreground-muted">Principal Amount:</span>
+                <span className="font-extrabold text-foreground text-sm">{formatCurrency(selectedLoan.amount)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-foreground-muted">Nominal Annual Interest:</span>
+                <span className="font-semibold text-foreground">{selectedLoan.interestRate}% fixed</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-foreground-muted">Repayment Term:</span>
+                <span className="font-semibold text-foreground">{selectedLoan.termMonths} Months</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-foreground-muted">Monthly Instalment:</span>
+                <span className="font-bold text-primary text-sm">{formatCurrency(selectedLoan.monthlyInstalment)}/mo</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-foreground-muted">Total Repayable:</span>
+                <span className="font-bold text-foreground">
+                  {formatCurrency(selectedLoan.monthlyInstalment * selectedLoan.termMonths)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-foreground-muted">Finance Charges & Total Interest:</span>
+                <span className="font-semibold text-foreground">
+                  {formatCurrency(Math.max(0, (selectedLoan.monthlyInstalment * selectedLoan.termMonths) - selectedLoan.amount))}
+                </span>
+              </div>
+              {selectedLoan.loanType === 'photography' && (
+                <div className="flex justify-between items-center pt-2 border-t border-border text-primary">
+                  <span>Linked Service:</span>
+                  <span className="font-semibold">
+                    {selectedLoan.linkedBookingId ? `Photography Booking (${selectedLoan.linkedBookingId.slice(0, 8)})` : 'Photography Package Financing'}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Compliance Verification Check */}
+            <div className="bg-primary/5 border border-primary/20 rounded-xl p-3">
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={approvalComplianceChecked}
+                  onChange={(e) => setApprovalComplianceChecked(e.target.checked)}
+                  className="rounded border-border text-primary focus:ring-primary h-4 w-4 mt-0.5"
+                />
+                <span className="text-[11px] text-foreground leading-relaxed">
+                  I confirm as an authorized credit underwriter that affordability analysis, National Credit Act (NCA) maximum DTI checks, and FICA verification documentation have been verified.
+                </span>
+              </label>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setApprovalModalOpen(false)}
+                className="btn-silver px-4 py-2 text-xs font-medium rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={!approvalComplianceChecked}
+                onClick={async () => {
+                  await handleStatusUpdate('Approved');
+                  setApprovalModalOpen(false);
+                }}
+                className={`btn-gold px-4 py-2 text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow-sm ${
+                  !approvalComplianceChecked ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                <CheckCircle size={14} />
+                <span>Confirm Approval & Schedule Disbursement</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Structured Rejection Modal */}
+      {rejectionModalOpen && selectedLoan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setRejectionModalOpen(false)} />
+          <div className="relative w-full max-w-md bg-card border border-border rounded-2xl shadow-card-hover p-6 z-10 space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-danger/10 text-danger">
+                  <XCircle size={18} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">Underwriting Rejection Notice</h3>
+                  <p className="text-[11px] text-foreground-muted">Regulatory disclosure of credit decline reasons</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setRejectionModalOpen(false)}
+                className="p-1 rounded text-foreground-muted hover:text-foreground"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-[10px] font-semibold text-foreground-muted uppercase mb-1">
+                  Decline Reason Category *
+                </label>
+                <select
+                  value={rejectionReasonPreset}
+                  onChange={(e) => setRejectionReasonPreset(e.target.value)}
+                  className="input-luxury w-full px-3 py-2 bg-muted/40"
+                >
+                  <option value="DTI exceeds regulatory limit (40%)">DTI exceeds regulatory limit (40%)</option>
+                  <option value="Affordability criteria not met / insufficient disposable income">Affordability criteria not met / insufficient disposable income</option>
+                  <option value="Incomplete or unverified identity / FICA documentation">Incomplete or unverified identity / FICA documentation</option>
+                  <option value="Adverse credit bureau profile or active default judgements">Adverse credit bureau profile or active default judgements</option>
+                  <option value="Banking account verification failed or invalid bank statement">Banking account verification failed or invalid bank statement</option>
+                  <option value="Applicant requested withdrawal of application">Applicant requested withdrawal of application</option>
+                  <option value="Other / Custom Underwriting Reason">Other / Custom Underwriting Reason</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-semibold text-foreground-muted uppercase mb-1">
+                  Underwriter Notes / Specific Explanation
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Provide specific notes explaining the credit decline decision..."
+                  value={rejectionReasonCustom}
+                  onChange={(e) => setRejectionReasonCustom(e.target.value)}
+                  className="input-luxury w-full px-3 py-2"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setRejectionModalOpen(false)}
+                className="btn-silver px-4 py-2 text-xs font-medium rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const finalReason = rejectionReasonCustom.trim()
+                    ? `${rejectionReasonPreset} - ${rejectionReasonCustom.trim()}`
+                    : rejectionReasonPreset;
+                  await handleStatusUpdate('Rejected', finalReason);
+                  setRejectionModalOpen(false);
+                }}
+                className="px-4 py-2 text-xs font-semibold rounded-lg bg-danger hover:bg-danger/90 text-white flex items-center gap-1.5 transition-colors"
+              >
+                <XCircle size={14} />
+                <span>Confirm Rejection</span>
               </button>
             </div>
           </div>

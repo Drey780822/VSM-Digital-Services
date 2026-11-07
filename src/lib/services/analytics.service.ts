@@ -190,21 +190,7 @@ export async function fetchBookingsTrend(): Promise<BookingsMonthlyTrendItem[]> 
     }
   }
 
-  const result = Object.values(monthsData);
-  // If no bookings exist yet, provide realistic baseline trends
-  const hasData = result.some((m) => m.total > 0);
-  if (!hasData) {
-    return [
-      { month: 'Dec', weddings: 4, corporate: 2, birthdays: 3, graduation: 1, funeral: 1, grooves: 2, total: 13 },
-      { month: 'Jan', weddings: 6, corporate: 3, birthdays: 4, graduation: 2, funeral: 2, grooves: 1, total: 18 },
-      { month: 'Feb', weddings: 8, corporate: 4, birthdays: 5, graduation: 3, funeral: 1, grooves: 3, total: 24 },
-      { month: 'Mar', weddings: 5, corporate: 6, birthdays: 3, graduation: 2, funeral: 3, grooves: 2, total: 21 },
-      { month: 'Apr', weddings: 7, corporate: 5, birthdays: 6, graduation: 4, funeral: 2, grooves: 4, total: 28 },
-      { month: 'May', weddings: 9, corporate: 4, birthdays: 8, graduation: 5, funeral: 1, grooves: 5, total: 32 },
-    ];
-  }
-
-  return result;
+  return Object.values(monthsData);
 }
 
 export async function fetchLoanDisbursementTrend(): Promise<LoanMonthlyTrendItem[]> {
@@ -243,20 +229,7 @@ export async function fetchLoanDisbursementTrend(): Promise<LoanMonthlyTrendItem
     }
   }
 
-  const result = Object.values(monthsData);
-  const hasData = result.some((m) => m.disbursed > 0 || m.repaid > 0);
-  if (!hasData) {
-    return [
-      { month: 'Dec', disbursed: 28000, repaid: 18000 },
-      { month: 'Jan', disbursed: 35000, repaid: 22000 },
-      { month: 'Feb', disbursed: 42000, repaid: 31000 },
-      { month: 'Mar', disbursed: 38000, repaid: 28000 },
-      { month: 'Apr', disbursed: 51000, repaid: 35000 },
-      { month: 'May', disbursed: 47000, repaid: 40000 },
-    ];
-  }
-
-  return result;
+  return Object.values(monthsData);
 }
 
 export async function fetchPackageStats(): Promise<PackageStatItem[]> {
@@ -273,14 +246,6 @@ export async function fetchPackageStats(): Promise<PackageStatItem[]> {
   }
 
   const list = Object.values(map);
-  if (list.length === 0) {
-    return [
-      { name: 'Cinematic Experience', count: 18, revenue: 160200 },
-      { name: 'Legacy Collection', count: 12, revenue: 174000 },
-      { name: 'Essential Memories', count: 15, revenue: 67500 },
-    ];
-  }
-
   return list.sort((a, b) => b.revenue - a.revenue);
 }
 
@@ -298,16 +263,5 @@ export async function fetchEventTypeStats(): Promise<EventTypeStatItem[]> {
   }
 
   const list = Object.values(map);
-  if (list.length === 0) {
-    return [
-      { eventType: 'Wedding', count: 18, revenue: 180000 },
-      { eventType: 'Birthday', count: 12, revenue: 75000 },
-      { eventType: 'Corporate', count: 8, revenue: 92000 },
-      { eventType: 'Graduation', count: 6, revenue: 45000 },
-      { eventType: 'Funeral', count: 4, revenue: 22000 },
-      { eventType: 'Groove', count: 7, revenue: 54000 },
-    ];
-  }
-
   return list.sort((a, b) => b.count - a.count);
 }

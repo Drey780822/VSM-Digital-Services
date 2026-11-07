@@ -28,7 +28,9 @@ export const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
   'Gallery Uploaded': 'Gallery Uploaded',
   Delivered: 'Delivered',
   Rejected: 'Rejected',
+  Cancelled: 'Cancelled',
 };
+
 
 export const PACKAGES = [
   {
@@ -63,11 +65,25 @@ export const BOOKING_ADDONS = [
 ] as const;
 
 export function getPackageById(id: string) {
-  return PACKAGES.find((p) => p.id === id || p.slug === id);
+  const norm = id.toLowerCase().trim();
+  return PACKAGES.find(
+    (p) =>
+      p.id.toLowerCase() === norm ||
+      p.slug.toLowerCase() === norm ||
+      p.slug.toLowerCase().includes(norm) ||
+      norm.includes(p.slug.toLowerCase())
+  );
 }
 
 export function getPackageBySlug(slug: string) {
-  return PACKAGES.find((p) => p.slug === slug);
+  const norm = slug.toLowerCase().trim();
+  return PACKAGES.find(
+    (p) =>
+      p.slug.toLowerCase() === norm ||
+      norm.includes(p.slug.toLowerCase()) ||
+      p.slug.toLowerCase().includes(norm) ||
+      p.id.toLowerCase() === norm
+  );
 }
 
 export function calculateBookingTotal(

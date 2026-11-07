@@ -21,6 +21,7 @@ export interface BookingAddon {
 }
 
 export interface CreateBookingPayload {
+  userId?: string;
   fullName: string;
   email: string;
   phone: string;
@@ -36,9 +37,13 @@ export interface CreateBookingPayload {
   packagePrice: number;
   addons: BookingAddon[];
   notes?: string;
+  financed?: boolean;
+  paymentPreference?: 'direct' | 'finance';
+  financeTerm?: number;
 }
 
 export interface BookingFormData {
+  userId?: string;
   fullName: string;
   email: string;
   phone: string;
@@ -56,4 +61,8 @@ export interface BookingFormData {
   notes: string;
   referenceNumber: string;
   trackingNumber: string;
+  bookingId?: string;
+  paymentPreference: 'direct' | 'finance';
+  financeTerm?: number;
 }
+

@@ -4,15 +4,22 @@ import type { BookingRecord, BookingStatus, BookingStatusHistoryEntry } from './
 export function mapBookingRow(row: Record<string, any>): BookingRecord {
   const venueName = row.venue_name || '';
   const venueAddress = row.venue_address || row.location || '';
+  const customerName = row.customer_name || row.client || '';
+  const totalAmount = Number(row.total_amount ?? row.deposit ?? 0);
+  const deposit = Number(row.deposit ?? 0);
+  const paymentStatus = (row.payment_status || (deposit > 0 ? 'Deposit Paid' : 'Unpaid')) as any;
 
   return {
     id: row.id,
+    userId: row.user_id ?? undefined,
     customerId: row.customer_id ?? undefined,
-    client: row.customer_name || row.client || '',
+    customerName,
+    client: customerName,
     email: row.email || '',
     phone: row.phone || '',
     idNumber: row.id_number ?? undefined,
     eventType: row.event_type || '',
+    packageId: row.package_id ?? undefined,
     packageName: row.package_name || '',
     eventDate: row.event_date || '',
     eventTime: row.event_time || '',
@@ -21,9 +28,12 @@ export function mapBookingRow(row: Record<string, any>): BookingRecord {
     location: venueAddress || row.location || '',
     guestCount: row.guest_count ?? 0,
     addons: Array.isArray(row.addons) ? row.addons : [],
-    deposit: Number(row.total_amount ?? row.deposit ?? 0),
+    totalAmount,
+    deposit,
     status: (row.status || 'Submitted') as BookingStatus,
+    paymentStatus,
     financed: Boolean(row.financed),
+    financedLoanId: row.financed_loan_id ?? undefined,
     referenceNumber: row.reference_number || '',
     trackingNumber: row.tracking_number || '',
     notes: row.notes ?? undefined,

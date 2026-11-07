@@ -80,7 +80,10 @@ export default function StepEventInfo({ data, updateData, onNext, onBack }: Prop
             <div className="relative">
               <Calendar size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-foreground-muted" />
               <input
-                {...register('eventDate', { required: 'Event date is required' })}
+                {...register('eventDate', {
+                  required: 'Event date is required',
+                  validate: (val) => val >= today || 'Event date cannot be in the past',
+                })}
                 type="date"
                 min={today}
                 className="input-luxury w-full pl-10 pr-4 py-3 text-sm"

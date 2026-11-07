@@ -1,8 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowRight, ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { ArrowRight, ArrowLeft, Loader2, AlertCircle, CheckCircle, ShieldAlert, LogIn } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 import { calculateBookingTotal } from '@/lib/bookings/constants';
 import { createBooking } from '@/lib/bookings/service';
 import type { BookingFormData, EventType } from '@/lib/bookings/types';
@@ -15,16 +18,26 @@ interface Props {
 }
 
 export default function StepReviewSubmit({ data, updateData, onNext, onBack }: Props) {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const total = calculateBookingTotal(data.packagePrice, data.addons);
 
   const handleSubmit = async () => {
+    if (!user) {
+      setError('Please sign in or create an account before submitting your booking.');
+      toast.error('Please sign in before submitting your booking.');
+      router.push('/auth/login?redirect=/book');
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
 
     try {
+      const isFinanced = data.paymentPreference === 'finance';
       const booking = await createBooking({
         fullName: data.fullName,
         email: data.email,
@@ -41,21 +54,29 @@ export default function StepReviewSubmit({ data, updateData, onNext, onBack }: P
         packagePrice: data.packagePrice,
         addons: data.addons,
         notes: data.notes || undefined,
+        financed: isFinanced,
+        paymentPreference: data.paymentPreference,
+        financeTerm: data.financeTerm,
       });
 
       updateData({
         referenceNumber: booking.referenceNumber,
         trackingNumber: booking.trackingNumber,
+        bookingId: booking.id,
       });
 
       if (typeof window !== 'undefined') {
         sessionStorage.setItem(
           'vsm-track-session',
-          JSON.stringify({ email: data.email, reference: booking.referenceNumber })
+          JSON.stringify({ email: data.email, reference: booking.referenceNumber, bookingId: booking.id })
         );
       }
 
-      toast.success('Booking submitted successfully!');
+      toast.success(
+        isFinanced
+          ? 'Booking registered! Now let’s set up your Smart Financing.'
+          : 'Booking submitted successfully!'
+      );
       onNext();
     } catch (err) {
       const message =
@@ -67,10 +88,12 @@ export default function StepReviewSubmit({ data, updateData, onNext, onBack }: P
     }
   };
 
+  const isFinanced = data.paymentPreference === 'finance';
   const summaryRows = [
     { label: 'Name', value: data.fullName },
     { label: 'Email', value: data.email },
     { label: 'Phone', value: data.phone },
+    { label: 'ID Number', value: data.idNumber },
     { label: 'Event Type', value: data.eventType },
     {
       label: 'Event Date & Time',
@@ -87,6 +110,12 @@ export default function StepReviewSubmit({ data, updateData, onNext, onBack }: P
         : 'None',
     },
     { label: 'Estimated Total', value: `R ${total.toLocaleString()}` },
+    {
+      label: 'Payment Method',
+      value: isFinanced
+        ? `Smart Financing (${data.financeTerm || 6} monthly instalments)`
+        : 'Pay Directly (Invoice & Deposit)',
+    },
   ];
 
   return (
@@ -99,6 +128,46 @@ export default function StepReviewSubmit({ data, updateData, onNext, onBack }: P
           Confirm your details before submitting to Vincent for review.
         </p>
       </div>
+
+      {authLoading ? (
+        <div className="mb-6 flex items-center gap-2 rounded-xl border border-border bg-muted/30 p-3.5 text-xs text-foreground-muted">
+          <Loader2 size={14} className="animate-spin text-primary" />
+          <span>Verifying authentication status...</span>
+        </div>
+      ) : user ? (
+        <div className="mb-6 flex items-center justify-between rounded-xl border border-success/30 bg-success/10 px-4 py-3 text-xs text-success">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle size={16} className="text-success flex-shrink-0" />
+            <span>
+              Signed in as <strong className="text-foreground">{user.email}</strong>. Booking will be linked to your account.
+            </span>
+          </div>
+          <span className="hidden sm:inline-flex rounded-full bg-success/20 px-2.5 py-0.5 text-[10px] font-bold text-success uppercase tracking-wider">
+            Verified Account
+          </span>
+        </div>
+      ) : (
+        <div className="mb-6 rounded-xl border border-primary/30 bg-primary/5 p-4">
+          <div className="flex items-start gap-3">
+            <ShieldAlert className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h4 className="text-sm font-semibold text-foreground">Sign In Required to Complete Booking</h4>
+              <p className="text-xs text-foreground-muted mt-1 leading-relaxed">
+                An authenticated VSM account is required to confirm your booking. This connects your event to the customer portal for real-time tracking, contract signing, and private memory vault access.
+              </p>
+              <div className="mt-3 flex items-center gap-2">
+                <Link
+                  href="/auth/login?redirect=/book"
+                  className="btn-gold px-4 py-2 text-xs font-semibold rounded-md inline-flex items-center gap-1.5 shadow"
+                >
+                  <LogIn size={13} />
+                  Sign In / Register Now
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="bg-muted/40 border border-border rounded-xl p-5 mb-6 space-y-3">
         {summaryRows.map((row) => (
@@ -135,13 +204,18 @@ export default function StepReviewSubmit({ data, updateData, onNext, onBack }: P
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={submitting}
+          disabled={submitting || authLoading}
           className="btn-gold flex-1 py-3 text-sm font-semibold rounded-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {submitting ? (
             <>
               <Loader2 size={15} className="animate-spin" />
-              Submitting...
+              Submitting Booking...
+            </>
+          ) : !user ? (
+            <>
+              Sign In to Submit Booking
+              <ArrowRight size={15} />
             </>
           ) : (
             <>
