@@ -1,0 +1,110 @@
+.circular-gallery {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+}
+
+.circular-gallery[data-pointer] {
+  cursor: pointer;
+}
+
+.circular-gallery[data-dragging] {
+  cursor: grabbing;
+}
+
+.circular-gallery-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.circular-gallery-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.circular-gallery-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  line-height: 1.2;
+  white-space: nowrap;
+  will-change: transform, opacity;
+  font-family: var(--font-manrope), 'Manrope', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.circular-gallery-caption {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: min(90%, 36rem);
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  font-family: var(--font-manrope), 'Manrope', sans-serif;
+}
+
+.circular-gallery-caption-text {
+  margin: 0;
+  line-height: 1.5;
+  opacity: 0.75;
+}
+
+.circular-gallery-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 50%;
+  background: rgba(11, 31, 58, 0.8);
+  backdrop-filter: blur(12px);
+  color: #FFFFFF;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  z-index: 20;
+}
+
+.circular-gallery-close[data-visible] {
+  opacity: 0.9;
+  pointer-events: auto;
+}
+
+.circular-gallery-close:hover {
+  opacity: 1;
+  border-color: #D4AF37;
+  color: #D4AF37;
+  transform: scale(1.05);
+}
+
+.circular-gallery-close:focus-visible {
+  outline: 2px solid #D4AF37;
+  outline-offset: 2px;
+}
+
+.circular-gallery-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

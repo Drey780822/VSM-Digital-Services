@@ -1,91 +1,89 @@
 'use client';
+
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Heart, Users, MapPin, Zap } from 'lucide-react';
+import { Heart, Users, MapPin, Briefcase } from 'lucide-react';
 
 const IMPACT_ITEMS = [
   {
     id: 'impact-1',
     icon: Heart,
-    title: 'Families First',
+    title: 'Milestones Preserved',
     description:
-      'We believe every family deserves cinematic memories regardless of budget. Our financing bridges the gap.',
+      'We believe every family milestone deserves high-tier visual artistry regardless of ticket size. Flexible pricing bridges the gap.',
   },
   {
     id: 'impact-2',
-    icon: Users,
-    title: 'Community Lending',
+    icon: Briefcase,
+    title: 'Creative Opportunities',
     description:
-      'Responsible loans designed for working South Africans. Fair rates, transparent terms, human support.',
+      'Connecting talented South African photographers and videographers to paid summits, weddings, and enterprise campaigns.',
   },
   {
     id: 'impact-3',
     icon: MapPin,
     title: 'Proudly South African',
     description:
-      'Rooted in Johannesburg, serving communities from Cape Town to Limpopo. African excellence, global standards.',
+      'Rooted in Gauteng, capturing memories from Tshwane to Soweto, Sandton, and across the provinces.',
   },
   {
     id: 'impact-4',
-    icon: Zap,
-    title: 'Empowering Moments',
+    icon: Users,
+    title: 'Community Empowerment',
     description:
-      'From township grooves to Sandton weddings — every event deserves a cinematic legacy.',
+      'Responsible financial options designed for real people. Fair rates, zero hidden traps, transparent support.',
   },
 ];
 
 export default function CommunitySection() {
   return (
-    <section id="community" className="relative py-24 lg:py-32 bg-background overflow-hidden">
-      <div className="section-divider absolute top-0 left-0 right-0" />
-      <div className="blob-gold absolute bottom-0 right-1/3 w-80 h-80 opacity-20" />
-      <div className="max-w-screen-2xl mx-auto px-6 lg:px-10 xl:px-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+    <section id="community" className="relative py-28 lg:py-36 bg-near-black overflow-hidden border-b border-white/5">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
           <motion.div
-            initial={{ opacity: 0, y: 32 }}
+            initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <span className="text-xs font-semibold tracking-widest uppercase text-primary mb-3 block">
-              Our Purpose
+            <span className="text-xs font-semibold tracking-widest uppercase text-vsm-gold mb-3 block">
+              Our Vision
             </span>
-            <h2 className="font-display text-4xl lg:text-5xl font-light text-foreground mb-6">
-              More Than Photography.{' '}
-              <span className="text-gradient-gold italic">Community Empowerment.</span>
+            <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight mb-6">
+              More Than Just a Booking.{' '}
+              <span className="text-vsm-gold">A Creative Ecosystem.</span>
             </h2>
-            <p className="text-foreground-muted text-base leading-relaxed mb-6">
-              VSM was born from a simple belief: every South African family deserves to have their
-              most important moments preserved with dignity and artistry — regardless of income.
+            <p className="text-sm sm:text-base text-white/65 leading-relaxed mb-6 font-normal">
+              VSM is the platform that helps people capture, finance, manage, and preserve
+              important moments — while creating sustainable, professional opportunities for the creatives delivering those moments.
             </p>
-            <p className="text-foreground-muted text-base leading-relaxed mb-8">
-              We combine luxury photography with responsible financial services to create a platform
-              that doesn&apos;t just capture memories — it empowers the communities that create
-              them.
+            <p className="text-sm sm:text-base text-white/65 leading-relaxed mb-8 font-normal">
+              From township celebrations to corporate hackathons and royal weddings, we bring
+              world-class media production and digital archiving into the hands of every community.
             </p>
             <div className="flex items-center gap-4">
-              <div className="w-12 h-1 bg-gold-gradient rounded-full" />
-              <span className="font-display text-lg italic text-foreground-muted">
-                &ldquo;Capture moments. Empower lives.&rdquo;
+              <div className="w-10 h-0.5 bg-vsm-gold" />
+              <span className="text-sm text-vsm-gold font-semibold uppercase tracking-wider">
+                Capture Moments · Empower Lives
               </span>
             </div>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {IMPACT_ITEMS?.map((item, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {IMPACT_ITEMS.map((item, i) => (
               <motion.div
-                key={item?.id}
-                initial={{ opacity: 0, y: 24 }}
+                key={item.id}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: i * 0.1 }}
-                className="luxury-card p-6"
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                className="p-6 rounded-2xl bg-deep-navy/35 border border-white/5 hover:border-vsm-gold/25 transition-all"
               >
-                <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-4">
-                  <item.icon size={18} className="text-primary" />
+                <div className="w-10 h-10 rounded-xl bg-corporate-navy/80 border border-vsm-gold/20 flex items-center justify-center text-vsm-gold mb-4">
+                  <item.icon size={18} />
                 </div>
-                <h3 className="text-sm font-semibold text-foreground mb-2">{item?.title}</h3>
-                <p className="text-xs text-foreground-muted leading-relaxed">{item?.description}</p>
+                <h3 className="text-sm font-bold text-white mb-2">{item.title}</h3>
+                <p className="text-xs text-white/60 leading-relaxed font-normal">{item.description}</p>
               </motion.div>
             ))}
           </div>

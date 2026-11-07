@@ -1,14 +1,15 @@
 'use client';
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calculator, ArrowRight, CheckCircle } from 'lucide-react';
+import { Calculator, ArrowRight, ShieldCheck, CheckCircle2, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 
-const PACKAGES_FOR_CALC = [
-  { id: 'calc-essential', label: 'Essential Memories', price: 4500 },
-  { id: 'calc-cinematic', label: 'Cinematic Experience', price: 8900 },
-  { id: 'calc-legacy', label: 'Legacy Collection', price: 14500 },
-  { id: 'calc-custom', label: 'Custom Amount', price: 0 },
+const PRODUCTION_OPTIONS = [
+  { id: 'essential', label: 'Essential (R5,500)', price: 5500 },
+  { id: 'cinematic', label: 'Cinematic (R8,900)', price: 8900 },
+  { id: 'legacy', label: 'Legacy (R14,500)', price: 14500 },
+  { id: 'custom', label: 'Custom Amount', price: 0 },
 ];
 
 const TERMS = [3, 6, 12, 18, 24];
@@ -20,189 +21,179 @@ function calcMonthly(principal: number, months: number): number {
 }
 
 function formatNumber(n: number): string {
-  return n.toLocaleString('en-ZA');
+  return Math.round(n).toLocaleString('en-ZA');
 }
 
 export default function FinancingSection() {
-  const [selectedPackage, setSelectedPackage] = useState('calc-cinematic');
-  const [customAmount, setCustomAmount] = useState(8900);
+  const [selectedProduction, setSelectedProduction] = useState('cinematic');
+  const [customAmount, setCustomAmount] = useState(10000);
   const [term, setTerm] = useState(6);
 
-  const pkg = PACKAGES_FOR_CALC.find((p) => p.id === selectedPackage);
-  const principal = pkg?.id === 'calc-custom' ? customAmount : (pkg?.price ?? 8900);
+  const selected = PRODUCTION_OPTIONS.find((p) => p.id === selectedProduction);
+  const principal = selected?.id === 'custom' ? customAmount : (selected?.price ?? 8900);
   const monthly = calcMonthly(principal, term);
   const totalRepay = monthly * term;
-  const totalInterest = totalRepay - principal;
 
   return (
-    <section id="financing" className="relative py-24 lg:py-32 bg-background-secondary overflow-hidden">
-      <div className="section-divider absolute top-0 left-0 right-0" />
-      <div className="blob-gold absolute top-1/2 right-0 w-96 h-96 opacity-25" />
+    <section id="financing" className="relative py-28 lg:py-36 bg-near-black overflow-hidden border-b border-white/5">
+      {/* Background Ambience */}
+      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-deep-navy/30 blur-[130px] rounded-full pointer-events-none" />
 
-      <div className="max-w-screen-2xl mx-auto px-6 lg:px-10 xl:px-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-20 items-center">
+          {/* Left Column: Vision & Philosophy */}
           <motion.div
-            initial={{ opacity: 0, x: -32 }}
+            initial={{ opacity: 0, x: -24 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <span className="text-xs font-semibold tracking-widest uppercase text-primary mb-3 block">Smart Financing</span>
-            <h2 className="font-display text-4xl lg:text-5xl font-light text-foreground mb-5">
-              Finance Your{' '}
-              <span className="text-gradient-gold italic">Dream Event</span>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-deep-navy border border-vsm-gold/25 text-vsm-gold text-xs font-semibold uppercase tracking-widest mb-4">
+              <ShieldCheck size={13} className="text-vsm-gold" />
+              <span>Smart Event Financing</span>
+            </div>
+            
+            <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight mb-6">
+              Never Compromise on Life&apos;s Milestones.
             </h2>
-            <p className="text-foreground-muted text-base leading-relaxed mb-8">
-              Don&apos;t let budget stand between you and your most important memories. Our smart financing lets you spread the cost of your photography package over flexible monthly instalments — with instant eligibility estimates.
+            
+            <p className="text-sm sm:text-base text-white/65 leading-relaxed mb-8 font-normal">
+              For major weddings, funerals, and large productions where ticket sizes exceed R3,000,
+              VSM provides contextual, low-friction financing. Spread payments over 3 to 24 months
+              while your crew is confirmed and your date is reserved.
             </p>
 
-            <div className="space-y-4 mb-8">
+            <div className="space-y-4 mb-10">
               {[
-                'No account creation required',
-                'Instant eligibility in under 2 minutes',
-                'Flexible 3–24 month repayment terms',
-                'Transparent fees — no hidden charges',
-                'Debit order for effortless repayments',
-              ].map((item, i) => (
-                <div key={`fin-feature-${i}`} className="flex items-center gap-3">
-                  <CheckCircle size={16} className="text-success flex-shrink-0" />
-                  <span className="text-sm text-foreground">{item}</span>
+                { title: 'Zero Surprise Fees', desc: 'Full NCR compliance with transparent monthly interest and disclosures.' },
+                { title: 'Preserve Date Today', desc: 'Secure production slots immediately while payments are smoothly handled.' },
+                { title: 'Dedicated Personal Loans', desc: 'Independent personal financial loans available through a discrete application portal.' },
+              ].map((item, idx) => (
+                <div key={idx} className="flex items-start gap-3.5">
+                  <div className="w-5 h-5 rounded-full bg-deep-navy border border-vsm-gold/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <CheckCircle2 size={12} className="text-vsm-gold" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">{item.title}</h4>
+                    <p className="text-xs text-white/60 leading-relaxed mt-0.5">{item.desc}</p>
+                  </div>
                 </div>
               ))}
             </div>
 
-            <Link
-              href="/loan-application-flow"
-              className="btn-gold inline-flex items-center gap-2.5 px-7 py-3.5 text-sm font-semibold rounded-md"
-            >
-              Start Application
-              <ArrowRight size={16} />
-            </Link>
+            <div className="flex flex-wrap items-center gap-4">
+              <Link
+                href="/loan-application-flow"
+                className="btn-gold px-7 py-3 text-xs uppercase tracking-wider font-bold rounded-lg shadow-gold flex items-center gap-2"
+              >
+                <span>Standalone Loan Application</span>
+                <ArrowRight size={13} />
+              </Link>
+            </div>
           </motion.div>
 
+          {/* Right Column: Interactive Minimalist Calculator */}
           <motion.div
-            initial={{ opacity: 0, x: 32 }}
+            initial={{ opacity: 0, x: 24 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
+            className="p-8 sm:p-10 rounded-2xl bg-deep-navy/50 border border-vsm-gold/25 backdrop-blur-xl shadow-2xl"
           >
-            <div className="bg-glass border border-gold rounded-2xl p-6 lg:p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-gold-gradient flex items-center justify-center">
-                  <Calculator size={18} className="text-background" />
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold text-foreground">Repayment Calculator</h3>
-                  <p className="text-xs text-foreground-muted">Estimate your monthly instalments</p>
-                </div>
+            <div className="flex items-center justify-between pb-6 mb-6 border-b border-white/10">
+              <div>
+                <h3 className="text-lg font-bold text-white">Instalment Calculator</h3>
+                <span className="text-xs text-white/50">Instant estimate with 18% p.a. illustrative rate</span>
               </div>
-
-              {/* Package Selector */}
-              <div className="mb-5">
-                <label className="block text-xs font-semibold text-foreground-muted tracking-wide uppercase mb-2">
-                  Select Package
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {PACKAGES_FOR_CALC.map((p) => (
-                    <button
-                      key={p.id}
-                      onClick={() => setSelectedPackage(p.id)}
-                      className={`px-3 py-2.5 rounded-md text-xs font-medium transition-all duration-200 text-left ${
-                        selectedPackage === p.id
-                          ? 'bg-gold-gradient text-background font-semibold' :'bg-muted text-foreground-muted hover:text-foreground border border-border'
-                      }`}
-                    >
-                      {p.label}
-                      {p.price > 0 && <span className="block text-xs opacity-70 mt-0.5">R {formatNumber(p.price)}</span>}
-                    </button>
-                  ))}
-                </div>
+              <div className="w-10 h-10 rounded-xl bg-corporate-navy border border-vsm-gold/25 flex items-center justify-center text-vsm-gold">
+                <Calculator size={18} />
               </div>
+            </div>
 
-              {/* Custom Amount */}
-              {selectedPackage === 'calc-custom' && (
-                <div className="mb-5">
-                  <label className="block text-xs font-semibold text-foreground-muted tracking-wide uppercase mb-2">
-                    Loan Amount (ZAR)
-                  </label>
+            {/* Select Package Tier or Amount */}
+            <div className="mb-6">
+              <label className="text-xs font-semibold text-white/70 block mb-2 uppercase tracking-wider">
+                Production / Amount
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {PRODUCTION_OPTIONS.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setSelectedProduction(p.id)}
+                    className={`py-2 px-3 rounded-lg text-xs font-medium text-left transition-all ${
+                      selectedProduction === p.id
+                        ? 'bg-vsm-gold text-near-black font-bold shadow-md'
+                        : 'bg-corporate-navy/60 text-white/80 hover:bg-corporate-navy border border-white/5'
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+              {selectedProduction === 'custom' && (
+                <div className="mt-4">
+                  <div className="flex justify-between text-xs text-white/70 mb-1">
+                    <span>Financing Amount</span>
+                    <span className="font-bold text-vsm-gold">R {formatNumber(customAmount)}</span>
+                  </div>
                   <input
                     type="range"
-                    min={1000}
-                    max={50000}
-                    step={500}
+                    min="3000"
+                    max="50000"
+                    step="500"
                     value={customAmount}
                     onChange={(e) => setCustomAmount(Number(e.target.value))}
-                    className="w-full accent-primary mb-2"
-                    aria-label="Loan amount slider"
+                    className="w-full accent-[#D4AF37]"
                   />
-                  <div className="flex justify-between text-xs text-foreground-muted">
-                    <span>R 1,000</span>
-                    <span className="text-primary font-semibold">R {formatNumber(customAmount)}</span>
-                    <span>R 50,000</span>
-                  </div>
                 </div>
               )}
-
-              {/* Term Selector */}
-              <div className="mb-6">
-                <label className="block text-xs font-semibold text-foreground-muted tracking-wide uppercase mb-2">
-                  Repayment Term
-                </label>
-                <div className="flex gap-2">
-                  {TERMS.map((t) => (
-                    <button
-                      key={`term-${t}`}
-                      onClick={() => setTerm(t)}
-                      className={`flex-1 py-2 rounded-md text-xs font-medium transition-all duration-200 ${
-                        term === t
-                          ? 'bg-gold-gradient text-background font-semibold' :'bg-muted text-foreground-muted hover:text-foreground border border-border'
-                      }`}
-                    >
-                      {t}m
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Result */}
-              <div className="bg-background rounded-xl p-5 border border-gold">
-                <div className="text-center mb-4">
-                  <div className="text-xs font-semibold text-foreground-muted tracking-wide uppercase mb-1">
-                    Monthly Instalment
-                  </div>
-                  <div className="font-display text-4xl font-semibold text-gradient-gold counter-value">
-                    R {formatNumber(Math.ceil(monthly))}
-                  </div>
-                  <div className="text-xs text-foreground-muted mt-1">over {term} months</div>
-                </div>
-                <div className="grid grid-cols-3 gap-3 text-center pt-4 border-t border-border">
-                  <div>
-                    <div className="text-xs text-foreground-muted mb-0.5">Principal</div>
-                    <div className="text-sm font-semibold text-foreground counter-value">R {formatNumber(principal)}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-foreground-muted mb-0.5">Interest</div>
-                    <div className="text-sm font-semibold text-warning counter-value">R {formatNumber(Math.ceil(totalInterest))}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-foreground-muted mb-0.5">Total</div>
-                    <div className="text-sm font-semibold text-foreground counter-value">R {formatNumber(Math.ceil(totalRepay))}</div>
-                  </div>
-                </div>
-              </div>
-
-              <p className="text-xs text-foreground-muted mt-3 text-center">
-                18% per annum. Subject to eligibility. Representative example only.
-              </p>
-
-              <Link
-                href="/loan-application-flow"
-                className="btn-gold w-full mt-4 py-3.5 text-sm font-semibold rounded-md flex items-center justify-center gap-2"
-              >
-                Check My Eligibility
-                <ArrowRight size={15} />
-              </Link>
             </div>
+
+            {/* Select Terms */}
+            <div className="mb-8">
+              <label className="text-xs font-semibold text-white/70 block mb-2 uppercase tracking-wider">
+                Repayment Term
+              </label>
+              <div className="grid grid-cols-5 gap-2">
+                {TERMS.map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setTerm(m)}
+                    className={`py-2 rounded-lg text-xs font-semibold text-center transition-all ${
+                      term === m
+                        ? 'bg-vsm-gold text-near-black shadow-md'
+                        : 'bg-corporate-navy/60 text-white/75 hover:bg-corporate-navy border border-white/5'
+                    }`}
+                  >
+                    {m} mo
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Computed Output Box */}
+            <div className="p-5 rounded-xl bg-corporate-navy/70 border border-vsm-gold/20 mb-6">
+              <div className="flex items-baseline justify-between mb-2">
+                <span className="text-xs text-white/60">Estimated Monthly</span>
+                <span className="text-2xl sm:text-3xl font-extrabold text-vsm-gold">
+                  R {formatNumber(monthly)}
+                  <span className="text-xs text-white/50 font-normal"> /mo</span>
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs text-white/50 pt-2 border-t border-white/10">
+                <span>Total Repayment ({term} months)</span>
+                <span className="font-medium text-white/80">R {formatNumber(totalRepay)}</span>
+              </div>
+            </div>
+
+            <Link
+              href="/book"
+              className="w-full py-3 rounded-lg text-xs font-bold uppercase tracking-wider btn-gold text-center block shadow-gold"
+            >
+              Book &amp; Choose Payment on Checkout
+            </Link>
           </motion.div>
         </div>
       </div>

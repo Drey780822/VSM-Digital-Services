@@ -1,143 +1,165 @@
 'use client';
-import React, { useEffect, useRef } from 'react';
-import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { Camera, TrendingUp, ArrowRight } from 'lucide-react';
 
-const PARTICLES = [
-  { id: 'p1', top: '15%', left: '8%', size: 4, delay: 0 },
-  { id: 'p2', top: '25%', left: '85%', size: 6, delay: 1.5 },
-  { id: 'p3', top: '60%', left: '12%', size: 3, delay: 3 },
-  { id: 'p4', top: '75%', left: '78%', size: 5, delay: 0.8 },
-  { id: 'p5', top: '40%', left: '92%', size: 4, delay: 2.2 },
-  { id: 'p6', top: '80%', left: '35%', size: 3, delay: 1.1 },
-  { id: 'p7', top: '20%', left: '55%', size: 2, delay: 2.8 },
-  { id: 'p8', top: '50%', left: '3%', size: 5, delay: 0.4 },
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Camera, ArrowRight, Sparkles, Building2 } from 'lucide-react';
+
+const HERO_SLIDES = [
+  {
+    image: '/assets/images/vsm_snaps/brideandgroom.jpg',
+    category: 'Cinematic Weddings',
+    tagline: 'Timeless African matrimony documented with royal elegance.',
+  },
+  {
+    image: '/assets/images/vsm_snaps/Graduate.jpg',
+    category: 'Graduation Milestones',
+    tagline: 'Academic triumphs and hard-earned pride preserved forever.',
+  },
+  {
+    image: '/assets/images/vsm_snaps/grooves.jpg',
+    category: 'Cultural Grooves & Festivals',
+    tagline: 'High-energy nightlife and cultural expression in vivid clarity.',
+  },
+  {
+    image: '/assets/images/vsm_snaps/churchdays.jpg',
+    category: 'Sacred Gatherings',
+    tagline: 'Sunday worship, solemn reverence, and joyful fellowship.',
+  },
+  {
+    image: '/assets/images/vsm_snaps/best_mans.jpg',
+    category: 'Brotherhood Celebrations',
+    tagline: 'Unfiltered candid moments and life-long memories.',
+  },
+  {
+    image: '/assets/images/vsm_snaps/kasi_gents.jpg',
+    category: 'Urban Lifestyle & Style',
+    tagline: 'Township heritage and modern street elegance.',
+  },
 ];
 
 export default function HeroSection() {
-  return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 z-0">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `url('/assets/images/vs_removed_background-1779933543272.png')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundAttachment: 'fixed',
-          }}
-        />
-        <div className="absolute inset-0 cinematic-overlay" />
-        <div className="absolute inset-0" style={{ background: 'rgba(11,11,13,0.55)' }} />
-      </div>
-      {/* Ambient blobs */}
-      <div className="blob-gold absolute top-1/4 left-1/4 w-96 h-96 z-[1]" />
-      <div className="blob-silver absolute bottom-1/3 right-1/4 w-72 h-72 z-[1]" />
-      {/* Particles */}
-      {PARTICLES?.map((p) => (
-        <div
-          key={p?.id}
-          className="particle z-[2]"
-          style={{
-            top: p?.top,
-            left: p?.left,
-            width: `${p?.size * 2}px`,
-            height: `${p?.size * 2}px`,
-            animationDelay: `${p?.delay}s`,
-          }}
-        />
-      ))}
-      {/* Content */}
-      <div className="relative z-10 max-w-screen-2xl mx-auto px-6 lg:px-10 xl:px-16 pt-32 pb-20 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-        >
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-glass border border-gold text-xs font-semibold tracking-widest uppercase text-primary mb-8">
-            <Camera size={12} />
-            African Luxury Photography & Financing
-          </span>
-        </motion.div>
+  const [currentSlide, setCurrentSlide] = useState(0);
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
+    }, 5500);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <section className="relative min-h-[95vh] flex items-center justify-center overflow-hidden bg-near-black pt-28 pb-20">
+      {/* Background Slideshow with Smooth Crossfade & Ken Burns Zoom */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <AnimatePresence initial={false}>
+          <motion.div
+            key={currentSlide}
+            initial={{ opacity: 0, scale: 1.08 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 1.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="absolute inset-0"
+          >
+            <Image
+              src={HERO_SLIDES[currentSlide].image}
+              alt={HERO_SLIDES[currentSlide].category}
+              fill
+              priority
+              className="object-cover object-center"
+              sizes="100vw"
+            />
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Cinematic Multi-layered Vignette & Brand Gradients */}
+        <div className="absolute inset-0 bg-gradient-to-t from-near-black via-near-black/80 to-near-black/55" />
+        <div className="absolute inset-0 bg-gradient-to-b from-near-black/90 via-transparent to-near-black/95" />
+        <div className="absolute inset-0 bg-deep-navy/30 mix-blend-multiply" />
+
+        {/* Ambient Glows */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-deep-navy/40 blur-[150px] rounded-full" />
+        <div className="absolute -top-16 right-10 w-96 h-96 bg-vsm-gold/10 blur-[120px] rounded-full" />
+      </div>
+
+      {/* Content Container */}
+      <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
+        {/* Minimalist Top Badge */}
+
+        {/* Primary Headline with Manrope */}
         <motion.h1
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 25 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="font-display hero-text-hero-xl font-light text-foreground mb-6 max-w-5xl mx-auto"
+          transition={{ duration: 0.8, delay: 0.1 }}
+          className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-white tracking-tight leading-[1.08] mb-8 max-w-4xl mx-auto"
         >
-          Preserve Every <span className="text-gradient-gold italic">Moment.</span>
-          <br />
-          Empower Every <span className="text-gradient-silver italic">Life.</span>
+          Capture Important Moments. <br />
+          <span className="text-gradient-gold">Preserve Everlasting Memories.</span>
         </motion.h1>
 
+        {/* Subtitle */}
         <motion.p
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
-          className="text-lg lg:text-xl text-foreground-muted max-w-2xl mx-auto mb-12 leading-relaxed font-light"
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="text-base sm:text-lg lg:text-xl text-white/75 max-w-2xl mx-auto mb-12 font-normal leading-relaxed"
         >
-          VSM helps communities preserve memories and access financial support through one trusted
-          digital platform.
+          The dedicated platform for everyday mini-events, cinematic wedding packages,
+          and enterprise summits — with intelligent, flexible financing when your moment demands it.
         </motion.p>
 
+        {/* Primary Action Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.45 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4"
+          transition={{ duration: 0.8, delay: 0.3 }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
         >
-          <a
-            href="#packages"
-            className="btn-gold flex items-center gap-2.5 px-8 py-4 text-base font-semibold rounded-md glow-gold animate-glow-pulse"
-          >
-            <Camera size={18} />
-            Book Your Event
-            <ArrowRight size={16} />
-          </a>
           <Link
-            href="/loan-application-flow"
-            className="btn-silver flex items-center gap-2.5 px-8 py-4 text-base font-medium rounded-md"
+            href="/book"
+            className="btn-gold w-full sm:w-auto flex items-center justify-center gap-2.5 px-8 py-4 text-sm font-bold uppercase tracking-wider rounded-full shadow-gold"
           >
-            <TrendingUp size={18} />
-            Apply For Loan
+            <Camera size={16} />
+            <span>Book Your Event</span>
+            <ArrowRight size={15} />
           </Link>
+          <a
+            href="#business-brief"
+            className="btn-silver w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-4 text-sm font-semibold rounded-full bg-deep-navy/60 backdrop-blur-md hover:bg-deep-navy"
+          >
+            <Building2 size={16} className="text-vsm-gold" />
+            <span>VSM for Business</span>
+          </a>
         </motion.div>
 
+        {/* Slideshow Progress Bar & Live Category Indicator */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.7 }}
-          className="mt-16 flex items-center justify-center gap-8 flex-wrap"
+          transition={{ duration: 0.8, delay: 0.4 }}
+          className="flex items-center justify-center gap-4 mb-10"
         >
-          {[
-            { value: '500+', label: 'Events Captured' },
-            { value: 'R2.4M', label: 'Loans Disbursed' },
-            { value: '98%', label: 'Client Satisfaction' },
-            { value: '8 Yrs', label: 'Trusted Experience' },
-          ]?.map((stat) => (
-            <div key={`hero-stat-${stat?.label}`} className="text-center">
-              <div className="font-display text-2xl font-semibold text-gradient-gold counter-value">
-                {stat?.value}
-              </div>
-              <div className="text-xs text-foreground-muted tracking-wide mt-0.5">
-                {stat?.label}
-              </div>
-            </div>
-          ))}
+          <div className="flex items-center gap-2">
+            {HERO_SLIDES.map((slide, idx) => (
+              <button
+                key={slide.category}
+                onClick={() => setCurrentSlide(idx)}
+                className={`h-1.5 transition-all duration-500 rounded-full ${
+                  currentSlide === idx
+                    ? 'w-8 bg-vsm-gold shadow-[0_0_10px_#D4AF37]'
+                    : 'w-2 bg-white/20 hover:bg-white/40'
+                }`}
+                aria-label={`Go to slide ${idx + 1}: ${slide.category}`}
+              />
+            ))}
+          </div>
+          <span className="text-[11px] text-white/60 tracking-wider uppercase font-medium">
+            {HERO_SLIDES[currentSlide].category}
+          </span>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1, duration: 1 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
-        >
-          <div className="w-px h-12 bg-gradient-to-b from-transparent via-primary/50 to-transparent" />
-          <span className="text-xs text-foreground-muted tracking-widest uppercase">Scroll</span>
-        </motion.div>
+
       </div>
     </section>
   );

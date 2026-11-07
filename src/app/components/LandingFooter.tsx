@@ -1,153 +1,149 @@
 import React from 'react';
 import Link from 'next/link';
-import AppLogo from '@/components/ui/AppLogo';
-import { MessageCircle, Mail, Phone, MapPin } from 'lucide-react';
-import Icon from '@/components/ui/AppIcon';
+import Image from 'next/image';
+import { Mail, Phone, MapPin, Globe, MessageCircle, Share2 } from 'lucide-react';
 
 export default function LandingFooter() {
   return (
-    <footer className="relative bg-background-secondary border-t border-border">
-      <div className="section-divider absolute top-0 left-0 right-0" />
-      <div className="max-w-screen-2xl mx-auto px-6 lg:px-10 xl:px-16 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-14">
-          {/* Brand */}
-          <div className="lg:col-span-1">
-            <div className="flex items-center gap-3 mb-4">
-              <AppLogo size={36} />
-              <span className="font-display text-xl font-semibold text-gradient-gold">VSM</span>
-            </div>
-            <p className="text-sm text-foreground-muted leading-relaxed mb-5">
-              African luxury photography and smart financing. Preserving moments. Empowering
-              communities.
+    <footer className="relative bg-near-black border-t border-white/10 text-white/70">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-16">
+          {/* Brand Info */}
+          <div className="lg:col-span-2">
+            <Link href="/" className="flex items-center gap-3.5 mb-5 group">
+              <div className="relative w-10 h-10 flex-shrink-0 transition-transform duration-300 group-hover:scale-105">
+                <Image
+                  src="/assets/images/logos/vsm-symbol-gold-transparent-1024.png"
+                  alt="VSM Symbol"
+                  fill
+                  sizes="40px"
+                  className="object-contain"
+                />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-bold tracking-tight text-white text-lg leading-tight">
+                  VSM
+                </span>
+                <span className="text-[10px] tracking-widest uppercase text-vsm-gold font-semibold">
+                  Digital Services
+                </span>
+              </div>
+            </Link>
+            <p className="text-xs text-white/60 leading-relaxed max-w-sm mb-6 font-normal">
+              The premier platform that helps South African individuals and organizations capture,
+              finance, manage, and preserve important moments — while empowering creative professionals.
             </p>
             <div className="flex items-center gap-3">
               {[
-                { icon: MessageCircle, href: '#', label: 'Instagram' },
-                { icon: MessageCircle, href: '#', label: 'Facebook' },
-                { icon: MessageCircle, href: '#', label: 'Twitter' },
-              ]?.map(({ icon: Icon, href, label }) => (
+                { icon: Globe, href: '#', label: 'Website' },
+                { icon: MessageCircle, href: '#', label: 'WhatsApp' },
+                { icon: Share2, href: '#', label: 'Social' },
+              ].map(({ icon: Icon, href, label }) => (
                 <a
                   key={`social-${label}`}
                   href={href}
                   aria-label={label}
-                  className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-foreground-muted hover:text-primary hover:bg-primary/10 transition-all duration-200"
+                  className="w-8 h-8 rounded-full bg-deep-navy border border-white/10 flex items-center justify-center text-white/70 hover:text-vsm-gold hover:border-vsm-gold/40 transition-all"
                 >
-                  <Icon size={15} />
+                  <Icon size={14} />
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Services */}
+          {/* Core Services */}
           <div>
-            <h4 className="text-xs font-semibold tracking-widest uppercase text-foreground mb-4">
-              Services
+            <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">
+              Commercial Lanes
             </h4>
-            <ul className="space-y-2.5">
-              {[
-                'Wedding Photography',
-                'Event Videography',
-                'Drone Coverage',
-                'Memory Vault',
-                'Event Loans',
-                'Personal Loans',
-              ]?.map((item) => (
-                <li key={`footer-svc-${item}`}>
-                  <a
-                    href="#"
-                    className="text-sm text-foreground-muted hover:text-primary transition-colors duration-200"
-                  >
-                    {item}
-                  </a>
-                </li>
-              ))}
+            <ul className="space-y-2.5 text-xs">
+              <li>
+                <Link href="/book" className="hover:text-vsm-gold transition-colors">
+                  Mini Events (Hourly)
+                </Link>
+              </li>
+              <li>
+                <Link href="#packages" className="hover:text-vsm-gold transition-colors">
+                  Major Productions (Packages)
+                </Link>
+              </li>
+              <li>
+                <a href="#business-brief" className="hover:text-vsm-gold transition-colors">
+                  VSM for Business
+                </a>
+              </li>
+              <li>
+                <Link href="/book" className="hover:text-vsm-gold transition-colors">
+                  Add-Ons &amp; Upgrades
+                </Link>
+              </li>
             </ul>
           </div>
 
-          {/* Quick Links */}
+          {/* Solutions & Storage */}
           <div>
-            <h4 className="text-xs font-semibold tracking-widest uppercase text-foreground mb-4">
-              Platform
+            <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">
+              Platform &amp; Vault
             </h4>
-            <ul className="space-y-2.5">
-              {[
-                { label: 'Book an Event', href: '#packages' },
-                { label: 'Apply for Loan', href: '/loan-application-flow' },
-                { label: 'Track Booking', href: '#' },
-                { label: 'Access Memory Vault', href: '#' },
-                { label: 'Admin Login', href: '/admin-dashboard' },
-              ]?.map((item) => (
-                <li key={`footer-link-${item?.label}`}>
-                  <Link
-                    href={item?.href}
-                    className="text-sm text-foreground-muted hover:text-primary transition-colors duration-200"
-                  >
-                    {item?.label}
-                  </Link>
-                </li>
-              ))}
+            <ul className="space-y-2.5 text-xs">
+              <li>
+                <a href="#gallery" className="hover:text-vsm-gold transition-colors">
+                  Memory Vault (Gallery)
+                </a>
+              </li>
+              <li>
+                <Link href="#financing" className="hover:text-vsm-gold transition-colors">
+                  Smart Event Financing
+                </Link>
+              </li>
+              <li>
+                <Link href="/loan-application-flow" className="hover:text-vsm-gold transition-colors">
+                  Personal Loans Portal
+                </Link>
+              </li>
+              <li>
+                <Link href="/portal" className="hover:text-vsm-gold transition-colors">
+                  Client &amp; Creator Portal
+                </Link>
+              </li>
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* Contact Details */}
           <div>
-            <h4 className="text-xs font-semibold tracking-widest uppercase text-foreground mb-4">
-              Contact
+            <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">
+              Presence
             </h4>
-            <ul className="space-y-3">
-              <li className="flex items-start gap-3">
-                <MapPin size={14} className="text-primary mt-0.5 flex-shrink-0" />
-                <span className="text-sm text-foreground-muted">
-                  Sandton, Johannesburg, South Africa
-                </span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Phone size={14} className="text-primary flex-shrink-0" />
-                <a
-                  href="tel:+27000000000"
-                  className="text-sm text-foreground-muted hover:text-primary transition-colors"
-                >
-                  +27 000 000 0000
-                </a>
-              </li>
-              <li className="flex items-center gap-3">
-                <Mail size={14} className="text-primary flex-shrink-0" />
-                <a
-                  href="mailto:info@VSM.co.za"
-                  className="text-sm text-foreground-muted hover:text-primary transition-colors"
-                >
-                  info@VSM.co.za
-                </a>
-              </li>
-            </ul>
-            <a
-              href="https://wa.me/27000000000"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2.5 mt-5 px-5 py-2.5 rounded-md bg-success/10 border border-success/30 text-success text-sm font-medium hover:bg-success/20 transition-all duration-200"
-            >
-              <MessageCircle size={15} />
-              WhatsApp Us
-            </a>
+            <div className="space-y-3 text-xs text-white/60">
+              <div className="flex items-start gap-2.5">
+                <MapPin size={14} className="text-vsm-gold flex-shrink-0 mt-0.5" />
+                <span>Pretoria &amp; Johannesburg, Gauteng, South Africa</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <Phone size={14} className="text-vsm-gold flex-shrink-0" />
+                <span>+27 000 000 0000</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <Mail size={14} className="text-vsm-gold flex-shrink-0" />
+                <span>info@vsmdigital.co.za</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="section-divider mb-6" />
-
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-foreground-muted">
-            © 2026 VSM. All rights reserved. Proudly South African.
-          </p>
-          <div className="flex items-center gap-5">
-            {['Privacy Policy', 'Terms of Service', 'POPIA Compliance']?.map((item) => (
-              <a
-                key={`legal-${item}`}
-                href="#"
-                className="text-xs text-foreground-muted hover:text-primary transition-colors duration-200"
-              >
-                {item}
-              </a>
-            ))}
+        {/* Bottom Sub-bar */}
+        <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-[11px] text-white/40 gap-4">
+          <p>© {new Date().getFullYear()} VSM Digital Services. All rights reserved.</p>
+          <div className="flex items-center gap-6">
+            <Link href="#" className="hover:text-white/70 transition-colors">
+              Terms &amp; Conditions
+            </Link>
+            <Link href="#" className="hover:text-white/70 transition-colors">
+              Privacy Policy
+            </Link>
+            <Link href="#" className="hover:text-white/70 transition-colors">
+              NCR Disclosures
+            </Link>
           </div>
         </div>
       </div>

@@ -7,18 +7,51 @@ module.exports = {
   theme: {
     container: {
       center: true,
-      padding: '1rem',
+      padding: '1.5rem',
     },
     extend: {
       colors: {
-        background: { DEFAULT: 'var(--background)', secondary: 'var(--background-secondary)', elevated: 'var(--background-elevated)' },
-        foreground: { DEFAULT: 'var(--foreground)', muted: 'var(--foreground-muted)' },
-        primary: { DEFAULT: 'var(--primary)', dark: 'var(--primary-dark)', light: 'var(--primary-light)', foreground: 'var(--primary-foreground)' },
-        secondary: { DEFAULT: 'var(--secondary)', foreground: 'var(--secondary-foreground)' },
-        accent: { DEFAULT: 'var(--accent)', foreground: 'var(--accent-foreground)' },
-        muted: { DEFAULT: 'var(--muted)', foreground: 'var(--muted-foreground)' },
-        card: { DEFAULT: 'var(--card)', foreground: 'var(--card-foreground)' },
-        border: { DEFAULT: 'var(--border)', gold: 'var(--border-gold)' },
+        'deep-navy': '#0B1F3A',
+        'corporate-navy': '#122B4A',
+        'vsm-gold': '#D4AF37',
+        'soft-gold': '#E7C766',
+        'clear-white': '#FFFFFF',
+        'near-black': '#070B12',
+        background: { 
+          DEFAULT: 'var(--background)', 
+          secondary: 'var(--background-secondary)', 
+          elevated: 'var(--background-elevated)' 
+        },
+        foreground: { 
+          DEFAULT: 'var(--foreground)', 
+          muted: 'var(--foreground-muted)' 
+        },
+        primary: { 
+          DEFAULT: 'var(--primary)', 
+          dark: 'var(--primary-dark)', 
+          light: 'var(--primary-light)', 
+          foreground: 'var(--primary-foreground)' 
+        },
+        secondary: { 
+          DEFAULT: 'var(--secondary)', 
+          foreground: 'var(--secondary-foreground)' 
+        },
+        accent: { 
+          DEFAULT: 'var(--accent)', 
+          foreground: 'var(--accent-foreground)' 
+        },
+        muted: { 
+          DEFAULT: 'var(--muted)', 
+          foreground: 'var(--muted-foreground)' 
+        },
+        card: { 
+          DEFAULT: 'var(--card)', 
+          foreground: 'var(--card-foreground)' 
+        },
+        border: { 
+          DEFAULT: 'var(--border)', 
+          gold: 'var(--border-gold)' 
+        },
         input: 'var(--input)',
         ring: 'var(--ring)',
         success: 'var(--success)',
@@ -63,16 +96,17 @@ module.exports = {
         },
       },
       backgroundImage: {
-        'gold-gradient': 'linear-gradient(135deg, #C8A96B 0%, #A67C52 100%)',
-        'gold-gradient-light': 'linear-gradient(135deg, #E8C87A 0%, #C8A96B 100%)',
-        'dark-gradient': 'linear-gradient(180deg, #0B0B0D 0%, #1A1A1F 100%)',
+        'gold-gradient': 'linear-gradient(135deg, #D4AF37 0%, #B38F24 100%)',
+        'gold-gradient-light': 'linear-gradient(135deg, #E7C766 0%, #D4AF37 100%)',
+        'dark-gradient': 'linear-gradient(180deg, #070B12 0%, #0B1F3A 100%)',
+        'navy-gradient': 'linear-gradient(180deg, #0B1F3A 0%, #122B4A 100%)',
       },
       boxShadow: {
-        'gold': '0 4px 20px rgba(200, 169, 107, 0.3)',
-        'gold-lg': '0 8px 40px rgba(200, 169, 107, 0.2), 0 0 80px rgba(200, 169, 107, 0.05)',
-        'card': '0 4px 24px rgba(0, 0, 0, 0.4)',
-        'card-hover': '0 8px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(200, 169, 107, 0.08)',
-        'inner-gold': 'inset 0 1px 0 rgba(200, 169, 107, 0.2)',
+        'gold': '0 4px 20px rgba(212, 175, 55, 0.25)',
+        'gold-lg': '0 8px 40px rgba(212, 175, 55, 0.2), 0 0 80px rgba(212, 175, 55, 0.05)',
+        'card': '0 4px 24px rgba(7, 11, 18, 0.6)',
+        'card-hover': '0 8px 40px rgba(7, 11, 18, 0.7), 0 0 20px rgba(212, 175, 55, 0.1)',
+        'inner-gold': 'inset 0 1px 0 rgba(212, 175, 55, 0.2)',
       },
     },
   },

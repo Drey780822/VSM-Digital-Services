@@ -1,135 +1,129 @@
 'use client';
+
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Camera, TrendingUp, Video, Image, Aperture, CreditCard, PiggyBank, BarChart2, ArrowRight } from 'lucide-react';
+import { Camera, Film, Building2, CreditCard, Archive, ArrowRight, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 
-const PHOTOGRAPHY_FEATURES = [
-  { id: 'pf-1', icon: Camera, text: 'Cinematic event photography' },
-  { id: 'pf-2', icon: Video, text: 'Full HD & 4K video production' },
-  { id: 'pf-3', icon: Aperture, text: 'Drone aerial photography' },
-  { id: 'pf-4', icon: Image, text: 'Private Memory Vault gallery' },
-];
-
-const LOAN_FEATURES = [
-  { id: 'lf-1', icon: TrendingUp, text: 'Smart eligibility calculator' },
-  { id: 'lf-2', icon: CreditCard, text: 'Finance your event package' },
-  { id: 'lf-3', icon: PiggyBank, text: 'Flexible repayment terms' },
-  { id: 'lf-4', icon: BarChart2, text: 'Personal loan dashboard' },
+const CORE_SERVICES = [
+  {
+    step: '01',
+    title: 'Everyday & Mini Events',
+    subtitle: 'From R850 · Hourly or Deliverables',
+    description: 'Birthdays, graduations, baby showers, pool parties, and grooves. Book exact hours without being forced into high-ticket packages.',
+    icon: Camera,
+    features: ['1h, 2h, 3h or 4+ hours', 'Edited photos + video reels', 'Fast 48h digital delivery', 'Add drone or express options'],
+    ctaText: 'Calculate Mini Event',
+    ctaLink: '/book',
+    highlight: false,
+  },
+  {
+    step: '02',
+    title: 'Major Event Productions',
+    subtitle: 'From R5,500 · Fixed Deposit to Reserve',
+    description: 'Weddings, funerals, and milestone family celebrations. Complete cinematic production teams, drone aerials, and luxury albums.',
+    icon: Film,
+    features: ['Multi-camera crew coverage', 'Cinematic feature film & highlights', 'Reserve date with fixed deposit', 'Financing available on checkout'],
+    ctaText: 'Explore Packages',
+    ctaLink: '#packages',
+    highlight: true,
+  },
+  {
+    step: '03',
+    title: 'VSM for Business & Summits',
+    subtitle: 'Bespoke Enterprise Proposals',
+    description: 'Tech summits, AWS Community Days, university hackathons, brand activations, and executive headshots with same-day social media turnarounds.',
+    icon: Building2,
+    features: ['Multi-photographer crews', 'Same-day social media clips', 'Interviews & keynote recording', 'Corporate invoicing & SLA contract'],
+    ctaText: 'Request Corporate Brief',
+    ctaLink: '#business-brief',
+    highlight: false,
+  },
+  {
+    step: '04',
+    title: 'Smart Financing & Assistance',
+    subtitle: 'Seamless, Contextual Credit',
+    description: 'Flexible payment options for qualifying photography packages, plus standalone personal financial loans with transparent terms.',
+    icon: CreditCard,
+    features: ['Pay from R750/month on packages', 'Zero prepayment penalties', 'Strict NCA compliance', 'Independent personal loan application'],
+    ctaText: 'Learn About Financing',
+    ctaLink: '#financing',
+    highlight: false,
+  },
 ];
 
 export default function ServicesSection() {
   return (
-    <section id="services" className="relative py-24 lg:py-32 bg-background overflow-hidden">
-      <div className="blob-gold absolute bottom-0 left-1/4 w-80 h-80 opacity-30" />
-      <div className="max-w-screen-2xl mx-auto px-6 lg:px-10 xl:px-16">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7 }}
-          className="text-center mb-16"
-        >
-          <span className="text-xs font-semibold tracking-widest uppercase text-primary mb-3 block">What We Offer</span>
-          <h2 className="font-display text-4xl lg:text-5xl font-light text-foreground mb-4">
-            Two Services.{' '}
-            <span className="text-gradient-gold italic">One Platform.</span>
+    <section id="services" className="relative py-28 lg:py-36 bg-near-black overflow-hidden border-b border-white/5">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        {/* Section Header */}
+        <div className="max-w-3xl mb-20">
+          <span className="text-xs font-semibold tracking-widest uppercase text-vsm-gold mb-3 block">
+            Commercial Capabilities
+          </span>
+          <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight mb-5">
+            Designed Around How You Actually Celebrate.
           </h2>
-          <p className="text-foreground-muted max-w-xl mx-auto text-base leading-relaxed">
-            Photography services and smart financing — naturally connected so you never have to compromise on your most important moments.
+          <p className="text-sm sm:text-base text-white/60 leading-relaxed font-normal">
+            No one should pay R5,500 for a two-hour birthday, and no corporate summit should be treated like a casual shoot.
+            VSM adapts its commercial model to the exact scale of your moment.
           </p>
-        </motion.div>
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-          {/* Photography Card */}
-          <motion.div
-            initial={{ opacity: 0, x: -32 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-            className="relative rounded-2xl overflow-hidden group cursor-pointer"
-          >
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage: `url('https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=800&q=80')`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/20 group-hover:via-background/70 transition-all duration-500" />
-            <div className="relative z-10 p-8 lg:p-10 min-h-[420px] flex flex-col justify-end">
-              <div className="w-14 h-14 rounded-2xl bg-glass border border-gold flex items-center justify-center mb-6 group-hover:glow-gold-strong transition-all duration-300">
-                <Camera size={24} className="text-primary" />
-              </div>
-              <h3 className="font-display text-3xl font-semibold text-foreground mb-3">
-                Photography Services
-              </h3>
-              <p className="text-foreground-muted text-sm leading-relaxed mb-6">
-                Cinematic event photography and videography for weddings, funerals, birthdays, graduations, grooves, and corporate events. Every moment preserved with luxury precision.
-              </p>
-              <div className="grid grid-cols-2 gap-2 mb-6">
-                {PHOTOGRAPHY_FEATURES?.map((f) => (
-                  <div key={f?.id} className="flex items-center gap-2">
-                    <f.icon size={13} className="text-primary flex-shrink-0" />
-                    <span className="text-xs text-foreground-muted">{f?.text}</span>
+        {/* Services Grid with Minimalist Breathing Room */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {CORE_SERVICES.map((s, idx) => (
+            <motion.div
+              key={s.step}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: idx * 0.1 }}
+              className={`p-7 rounded-2xl flex flex-col justify-between transition-all duration-300 ${
+                s.highlight
+                  ? 'bg-deep-navy border border-vsm-gold/40 shadow-gold'
+                  : 'bg-deep-navy/40 border border-white/5 hover:border-vsm-gold/30 hover:bg-deep-navy/60'
+              }`}
+            >
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <span className="text-xs font-bold tracking-widest text-vsm-gold/70">
+                    {s.step}
+                  </span>
+                  <div className="w-10 h-10 rounded-xl bg-corporate-navy/80 border border-vsm-gold/20 flex items-center justify-center text-vsm-gold">
+                    <s.icon size={18} />
                   </div>
-                ))}
-              </div>
-              <a
-                href="#packages"
-                className="btn-gold inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-md w-fit"
-              >
-                View Packages
-                <ArrowRight size={15} />
-              </a>
-            </div>
-          </motion.div>
+                </div>
 
-          {/* Loan Card */}
-          <motion.div
-            initial={{ opacity: 0, x: 32 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-            className="relative rounded-2xl overflow-hidden group cursor-pointer"
-          >
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage: `url('https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80')`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/30 group-hover:via-background/75 transition-all duration-500" />
-            <div className="relative z-10 p-8 lg:p-10 min-h-[420px] flex flex-col justify-end">
-              <div className="w-14 h-14 rounded-2xl bg-glass border border-gold flex items-center justify-center mb-6 group-hover:glow-gold-strong transition-all duration-300">
-                <TrendingUp size={24} className="text-primary" />
+                <h3 className="text-lg font-bold text-white mb-1.5">{s.title}</h3>
+                <span className="text-xs font-semibold text-vsm-gold block mb-4">{s.subtitle}</span>
+                <p className="text-xs text-white/65 leading-relaxed mb-6 font-normal">
+                  {s.description}
+                </p>
+
+                <div className="space-y-2 mb-8 pt-4 border-t border-white/5">
+                  {s.features.map((f, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs text-white/70">
+                      <CheckCircle2 size={13} className="text-vsm-gold flex-shrink-0" />
+                      <span>{f}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <h3 className="font-display text-3xl font-semibold text-foreground mb-3">
-                Loan Services
-              </h3>
-              <p className="text-foreground-muted text-sm leading-relaxed mb-6">
-                Smart financing for photography packages and personal loans. No account required — just verify your identity and get an instant eligibility estimate. Community-first lending.
-              </p>
-              <div className="grid grid-cols-2 gap-2 mb-6">
-                {LOAN_FEATURES?.map((f) => (
-                  <div key={f?.id} className="flex items-center gap-2">
-                    <f.icon size={13} className="text-primary flex-shrink-0" />
-                    <span className="text-xs text-foreground-muted">{f?.text}</span>
-                  </div>
-                ))}
-              </div>
+
               <Link
-                href="/loan-application-flow"
-                className="btn-silver inline-flex items-center gap-2 px-6 py-3 text-sm font-medium rounded-md w-fit"
+                href={s.ctaLink}
+                className={`w-full py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider text-center flex items-center justify-center gap-1.5 transition-all ${
+                  s.highlight
+                    ? 'btn-gold shadow-gold'
+                    : 'bg-corporate-navy/80 text-white/90 hover:bg-vsm-gold hover:text-near-black border border-white/10'
+                }`}
               >
-                Apply Now
-                <ArrowRight size={15} />
+                <span>{s.ctaText}</span>
+                <ArrowRight size={13} />
               </Link>
-            </div>
-          </motion.div>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>

@@ -7,7 +7,7 @@ import '../styles/tailwind.css';
 
 const manrope = Manrope({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['300', '400', '500', '600', '700', '800'],
   variable: '--font-manrope',
   display: 'swap',
 });
@@ -18,36 +18,30 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'VSM — Moments, finance and creative work',
+  title: 'VSM — Visuals & Digital Services',
   description:
-    'VSM is a premium African digital platform for cinematic event photography and smart loan services — capture memories, empower lives.',
+    'VSM is the premier platform to capture, finance, manage, and preserve important moments — creating professional opportunities for creatives.',
   icons: {
-    icon: [{ url: '/favicon.ico', type: 'image/x-icon' }],
+    icon: [{ url: '/assets/images/logos/vsm-symbol-gold-transparent-1024.png', type: 'image/png' }],
   },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={manrope.variable}>
-      <body className={manrope.className}>
+      <body className={`${manrope.className} bg-near-black text-clear-white antialiased selection:bg-vsm-gold/20 selection:text-white`}>
         <AuthProvider>{children}</AuthProvider>
         <Toaster
           position="bottom-right"
           toastOptions={{
             style: {
-              background: '#1A1A1F',
-              border: '1px solid rgba(200, 169, 107, 0.25)',
-              color: '#F5F1EA',
+              background: '#0B1F3A',
+              border: '1px solid rgba(212, 175, 55, 0.3)',
+              color: '#FFFFFF',
+              fontFamily: 'var(--font-manrope)',
             },
           }}
         />
-
-        <script
-          type="module"
-          async
-          src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2FVSM3892back.builtwithrocket.new&_be=https%3A%2F%2Fappanalytics.rocket.new&_v=0.1.19"
-        />
-        <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.2" />
       </body>
     </html>
   );

@@ -1,15 +1,17 @@
 'use client';
+
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import AppLogo from '@/components/ui/AppLogo';
-import { Menu, X, Phone } from 'lucide-react';
+import Image from 'next/image';
+import GooeyNav from '@/components/ui/GooeyNav';
+import { Menu, X, Calendar, User } from 'lucide-react';
 
-const navLinks = [
+const navItems = [
+  { label: 'Moments', href: '#gallery' },
   { label: 'Services', href: '#services' },
-  { label: 'Packages', href: '#packages' },
-  { label: 'Gallery', href: '#gallery' },
+  { label: 'Experiences', href: '#packages' },
+  { label: 'Corporate', href: '#business-brief' },
   { label: 'Financing', href: '#financing' },
-  { label: 'About', href: '#community' },
 ];
 
 export default function LandingNav() {
@@ -17,64 +19,78 @@ export default function LandingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 40);
+    const handler = () => setScrolled(window.scrollY > 30);
     window.addEventListener('scroll', handler, { passive: true });
     return () => window.removeEventListener('scroll', handler);
   }, []);
 
   return (
     <>
-      <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          scrolled ? 'bg-glass-dark border-b border-gold py-3' : 'bg-transparent py-5'
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled
+            ? 'bg-near-black/85 backdrop-blur-xl border-b border-vsm-gold/15 py-3'
+            : 'bg-transparent py-5'
         }`}
       >
-        <div className="max-w-screen-2xl mx-auto px-6 lg:px-10 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <AppLogo size={36} />
-            <span className="font-display text-xl font-semibold tracking-wide text-gradient-gold hidden sm:block"></span>
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 flex items-center justify-between">
+          {/* Logo Brand */}
+          <Link href="/" className="flex items-center gap-3.5 group">
+            <div className="relative w-10 h-10 flex-shrink-0 transition-transform duration-300 group-hover:scale-105">
+              <Image
+                src="/assets/images/logos/vsm-symbol-gold-transparent-1024.png"
+                alt="VSM Symbol"
+                fill
+                sizes="40px"
+                className="object-contain drop-shadow-[0_2px_10px_rgba(212,175,55,0.3)]"
+                priority
+              />
+            </div>
           </Link>
 
-          <div className="hidden lg:flex items-center gap-8">
-            {navLinks?.map((link) => (
-              <a
-                key={`nav-${link?.label}`}
-                href={link?.href}
-                className="text-sm font-medium text-foreground-muted hover:text-primary transition-colors duration-200 tracking-wide"
-              >
-                {link?.label}
-              </a>
-            ))}
+          {/* Desktop Gooey Navigation */}
+          <div className="hidden lg:block">
+            <GooeyNav
+              items={navItems}
+              theme="dark"
+              size="sm"
+              color="#D4AF37"
+              activeTextColor="#070B12"
+              timeVariance={200}
+              gooeyness={0.4}
+              particleCount={12}
+            />
           </div>
 
+          {/* Action CTAs */}
           <div className="hidden lg:flex items-center gap-3">
-            <a
-              href="tel:+27000000000"
-              className="flex items-center gap-2 text-sm text-foreground-muted hover:text-primary transition-colors duration-200"
+            <Link
+              href="/portal"
+              className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white/80 hover:text-vsm-gold transition-colors flex items-center gap-1.5"
             >
-              <Phone size={14} />
-              <span>+27 000 000 0000</span>
-            </a>
-            <Link href="#booking" className="btn-gold px-5 py-2.5 text-sm font-semibold rounded-md">
-              Book Event
+              <User size={14} className="text-vsm-gold" />
+              <span>Portal</span>
             </Link>
             <Link
-              href="/loan-application-flow"
-              className="btn-silver px-5 py-2.5 text-sm font-medium rounded-md"
+              href="/book"
+              className="btn-gold px-5 py-2 text-xs uppercase tracking-wider font-bold rounded-full flex items-center gap-2 shadow-gold"
             >
-              Apply for Loan
+              <Calendar size={13} />
+              <span>Book Event</span>
             </Link>
           </div>
 
+          {/* Mobile Menu Button */}
           <button
-            className="lg:hidden p-2 text-foreground-muted hover:text-primary transition-colors"
+            className="lg:hidden p-2 text-white/80 hover:text-vsm-gold transition-colors"
             onClick={() => setMobileOpen(true)}
-            aria-label="Open menu"
+            aria-label="Open navigation menu"
           >
-            <Menu size={22} />
+            <Menu size={24} />
           </button>
         </div>
-      </nav>
+      </header>
+
       {/* Mobile Drawer */}
       <div
         className={`fixed inset-0 z-[60] lg:hidden transition-all duration-300 ${
@@ -82,51 +98,64 @@ export default function LandingNav() {
         }`}
       >
         <div
-          className={`absolute inset-0 bg-background/80 backdrop-blur-sm transition-opacity duration-300 ${
+          className={`absolute inset-0 bg-near-black/80 backdrop-blur-md transition-opacity duration-300 ${
             mobileOpen ? 'opacity-100' : 'opacity-0'
           }`}
           onClick={() => setMobileOpen(false)}
         />
         <div
-          className={`absolute right-0 top-0 bottom-0 w-72 bg-background-secondary border-l border-gold flex flex-col transition-transform duration-300 ${
+          className={`absolute right-0 top-0 bottom-0 w-80 bg-deep-navy border-l border-vsm-gold/20 flex flex-col p-6 transition-transform duration-300 shadow-2xl ${
             mobileOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
         >
-          <div className="flex items-center justify-between p-5 border-b border-border">
+          <div className="flex items-center justify-between pb-6 border-b border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="relative w-8 h-8">
+                <Image
+                  src="/assets/images/logos/vsm-symbol-gold-transparent-1024.png"
+                  alt="VSM Logo"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <span className="font-bold text-white tracking-tight">VSM Services</span>
+            </div>
             <button
               onClick={() => setMobileOpen(false)}
-              className="p-1.5 text-foreground-muted hover:text-primary transition-colors"
+              className="p-1.5 text-white/70 hover:text-vsm-gold transition-colors"
               aria-label="Close menu"
             >
-              <X size={20} />
+              <X size={22} />
             </button>
           </div>
-          <div className="flex-1 p-5 flex flex-col gap-1">
-            {navLinks?.map((link) => (
+
+          <div className="flex-1 py-8 flex flex-col gap-2">
+            {navItems.map((item) => (
               <a
-                key={`mobile-nav-${link?.label}`}
-                href={link?.href}
+                key={`mobile-${item.label}`}
+                href={item.href}
                 onClick={() => setMobileOpen(false)}
-                className="px-4 py-3 text-sm font-medium text-foreground-muted hover:text-primary hover:bg-muted/50 rounded-md transition-all duration-200"
+                className="px-4 py-3 text-sm font-medium text-white/85 hover:text-vsm-gold hover:bg-corporate-navy/50 rounded-lg transition-colors"
               >
-                {link?.label}
+                {item.label}
               </a>
             ))}
           </div>
-          <div className="p-5 border-t border-border flex flex-col gap-3">
+
+          <div className="pt-6 border-t border-white/10 flex flex-col gap-3">
             <Link
-              href="#booking"
+              href="/book"
               onClick={() => setMobileOpen(false)}
-              className="btn-gold w-full py-3 text-sm font-semibold rounded-md text-center"
+              className="btn-gold w-full py-3 text-center text-xs uppercase tracking-wider font-bold rounded-lg shadow-gold"
             >
-              Book Event
+              Book an Event
             </Link>
             <Link
-              href="/loan-application-flow"
+              href="/portal"
               onClick={() => setMobileOpen(false)}
-              className="btn-silver w-full py-3 text-sm font-medium rounded-md text-center"
+              className="btn-silver w-full py-2.5 text-center text-xs uppercase tracking-wider font-medium rounded-lg"
             >
-              Apply for Loan
+              Client & Creator Portal
             </Link>
           </div>
         </div>
