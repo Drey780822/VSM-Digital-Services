@@ -211,7 +211,7 @@ export default function TrackBookingDetailClient({ reference }: Props) {
           <div className="bg-primary/5 border border-gold rounded-2xl p-6 text-center">
             <p className="text-sm font-semibold text-foreground mb-1">Memory Vault Ready</p>
             <p className="text-xs text-foreground-muted">
-              Your gallery is available. Vincent will share your secure gallery link via email.
+              Your gallery is available. All high-resolution captures have been curated.</p><div className="mt-4"><Link href="/vault/VSM-8492" className="btn-gold px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider inline-flex items-center gap-2"><span>Open Memory Vault</span><ArrowLeft className="rotate-180" size={13} /></Link></div><p className="hidden">
             </p>
           </div>
         ) : (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useTransition, Suspense } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -8,45 +8,52 @@ import {
   Mail,
   Loader2,
   Calendar,
-  ChevronRight,
-  AlertCircle,
-  Camera,
-  TrendingUp,
   Sparkles,
   CheckCircle,
-  Clock,
-  Printer,
   FileText,
-  ExternalLink,
   CreditCard,
   Download,
   ShieldCheck,
+  Lock,
+  ArrowRight,
+  Upload,
+  AlertCircle,
+  Clock,
+  MapPin,
+  ExternalLink,
+  ChevronRight,
   LogOut,
+  RefreshCw,
+  Eye,
+  Camera,
+  Coins
 } from 'lucide-react';
 import { toast } from 'sonner';
-import BookingFlowLayout from '@/app/book/components/BookingFlowLayout';
-import StatusBadge from '@/components/booking/StatusBadge';
+import PublicShell from '@/components/public/PublicShell';
 import { getCustomerBookings } from '@/lib/bookings/service';
 import { getCustomerLoans, type LoanRecord } from '@/lib/services/loans.service';
+import { getVaultsByCustomerEmail, type MemoryVaultRecord } from '@/lib/services/vaults.service';
+import { uploadPaymentProof } from '@/lib/services/payment-proofs.service';
 import type { BookingRecord } from '@/lib/bookings/types';
 import { formatCurrency, formatDate } from '@/lib/services/supabase-helpers';
-import { formatZAR } from '@/lib/services/eligibility.engine';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface PortalForm {
   email: string;
 }
 
-function CustomerPortalContent() {
+function CustomerPortalInner() {
   const searchParams = useSearchParams();
   const { user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<'bookings' | 'loans'>('bookings');
   const [bookings, setBookings] = useState<BookingRecord[] | null>(null);
   const [loans, setLoans] = useState<LoanRecord[] | null>(null);
+  const [vaults, setVaults] = useState<MemoryVaultRecord[] | null>(null);
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedLoan, setSelectedLoan] = useState<LoanRecord | null>(null);
+  const [uploadingBookingId, setUploadingBookingId] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
 
   const {
     register,
@@ -60,23 +67,25 @@ function CustomerPortalContent() {
     setError(null);
     try {
       const cleanEmail = customerEmail.trim().toLowerCase();
-      const [bookingsRes, loansRes] = await Promise.all([
+      const [bookingsRes, loansRes, vaultsRes] = await Promise.all([
         getCustomerBookings(cleanEmail, customerUserId || user?.id).catch(() => []),
         getCustomerLoans(cleanEmail).catch(() => []),
+        getVaultsByCustomerEmail(cleanEmail).catch(() => []),
       ]);
 
       setEmail(cleanEmail);
       setBookings(bookingsRes);
       setLoans(loansRes);
+      setVaults(vaultsRes);
 
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('vsm-portal-session', JSON.stringify({ email: cleanEmail }));
       }
 
-      if (bookingsRes.length === 0 && loansRes.length === 0) {
-        toast.info('No records found for this email address.');
+      if (bookingsRes.length === 0 && loansRes.length === 0 && vaultsRes.length === 0) {
+        toast.info('No active records found for this email address.');
       } else {
-        toast.success(`Loaded ${bookingsRes.length} bookings and ${loansRes.length} loans.`);
+        toast.success(`Loaded portfolio for ${cleanEmail}`);
       }
     } catch {
       setError('Unable to load your portal data. Please try again.');
@@ -117,452 +126,464 @@ function CustomerPortalContent() {
     loadCustomerData(values.email, user?.id);
   };
 
-  const printStatement = () => {
-    window.print();
+  const handleQuickDemo = (demoEmail = 'thabo@example.com') => {
+    setValue('email', demoEmail);
+    loadCustomerData(demoEmail);
+  };
+
+  const handleFileUpload = async (bookingId: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingBookingId(bookingId);
+    try {
+      await uploadPaymentProof(bookingId, file);
+      toast.success('Proof of payment uploaded! Admin will verify your transfer shortly.');
+      setUploadSuccess(bookingId);
+      // Reload customer bookings
+      if (email) loadCustomerData(email);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to upload proof of payment.');
+    } finally {
+      setUploadingBookingId(null);
+    }
   };
 
   return (
-    <BookingFlowLayout>
-      <div className="mb-6 text-center">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-gold/30 text-primary text-xs font-semibold tracking-widest uppercase mb-2">
-          <Sparkles size={13} />
-          Two Services · One Platform
-        </div>
-        <h1 className="font-display text-3xl font-semibold text-foreground">
-          Unified Customer <span className="text-gradient-gold italic">Portal</span>
-        </h1>
-        <p className="mt-2 text-sm text-foreground-muted max-w-md mx-auto">
-          Manage your luxury event photography bookings and smart financing accounts in one secure space.
-        </p>
-      </div>
+    <PublicShell>
+      <main className="min-h-screen bg-near-black text-clear-white pb-24 font-sans selection:bg-vsm-gold/20 selection:text-white">
+        {/* Portal Header */}
+        <div className="relative overflow-hidden py-16 border-b border-white/5 bg-gradient-to-b from-deep-navy/30 via-transparent to-transparent">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-deep-navy border border-vsm-gold/25 text-vsm-gold text-xs font-semibold uppercase tracking-widest mb-3">
+                  <ShieldCheck size={13} className="text-vsm-gold" />
+                  <span>Secure Client Portal</span>
+                </div>
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+                  Customer Portfolio & Memory Hub
+                </h1>
+                <p className="text-sm text-white/60 mt-1 max-w-xl">
+                  Track your visual media productions, download delivered memory vaults, and manage your financing accounts.
+                </p>
+              </div>
 
-      {bookings === null && loans === null ? (
-        <div className="bg-card border border-border rounded-2xl p-7 lg:p-8 shadow-xl">
-          {user ? (
-            <div className="mb-5 flex items-center justify-between rounded-xl border border-success/30 bg-success/10 px-4 py-3 text-xs text-success">
-              <div className="flex items-center gap-2">
-                <CheckCircle size={15} className="text-success" />
-                <span>
-                  Signed in as <strong>{user.email}</strong>. Ready to access your portfolio.
-                </span>
+              {email && (
+                <div className="flex items-center gap-3 bg-deep-navy/60 border border-white/10 rounded-2xl p-3 px-4 backdrop-blur-md">
+                  <div className="w-9 h-9 rounded-full bg-vsm-gold/20 border border-vsm-gold/40 flex items-center justify-center text-vsm-gold font-bold text-sm">
+                    {email.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="text-xs">
+                    <span className="text-white/50 block font-medium">Logged in as</span>
+                    <span className="text-white font-bold truncate max-w-[180px] block">{email}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      sessionStorage.removeItem('vsm-portal-session');
+                      setBookings(null);
+                      setLoans(null);
+                      setVaults(null);
+                      setEmail('');
+                      setValue('email', '');
+                    }}
+                    className="ml-2 text-white/40 hover:text-red-400 p-1.5 transition-colors"
+                    title="Switch Account"
+                  >
+                    <LogOut size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-6xl mx-auto px-6 pt-10">
+          {/* Email Lookup Card (Shown if no data loaded) */}
+          {bookings === null && loans === null ? (
+            <div className="max-w-xl mx-auto bg-deep-navy/40 border border-vsm-gold/25 rounded-3xl p-8 sm:p-10 shadow-2xl backdrop-blur-xl">
+              <div className="text-center mb-8">
+                <div className="w-14 h-14 rounded-full bg-deep-navy border border-vsm-gold/40 flex items-center justify-center text-vsm-gold mx-auto mb-4 shadow-gold">
+                  <Lock size={24} />
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2">Access Your Client Portal</h2>
+                <p className="text-xs sm:text-sm text-white/60 leading-relaxed">
+                  Enter the email address used during your event booking or loan application to securely view your account.
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-white/70 uppercase tracking-wider mb-2">
+                    Client Email Address
+                  </label>
+                  <div className="relative">
+                    <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+                    <input
+                      {...register('email', {
+                        required: 'Please enter your email',
+                        pattern: {
+                          value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                          message: 'Enter a valid email address',
+                        },
+                      })}
+                      type="email"
+                      placeholder="e.g. thabo@example.com"
+                      className="w-full pl-11 pr-4 py-3 rounded-xl bg-near-black/70 border border-white/15 text-white placeholder-white/30 text-sm font-medium outline-none focus:border-vsm-gold transition-colors"
+                    />
+                  </div>
+                  {errors.email && (
+                    <p className="text-xs text-red-400 mt-1.5 pl-2">{errors.email.message}</p>
+                  )}
+                </div>
+
+                {error && (
+                  <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2">
+                    <AlertCircle size={15} />
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-gold w-full py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Verifying Portfolio...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Open Customer Portal</span>
+                      <ArrowRight size={15} />
+                    </>
+                  )}
+                </button>
+              </form>
+
+              {/* Quick Demo Button */}
+              <div className="mt-6 pt-6 border-t border-white/10 text-center">
+                <p className="text-xs text-white/40 mb-3">Testing the platform?</p>
+                <button
+                  type="button"
+                  onClick={() => handleQuickDemo('thabo@example.com')}
+                  className="px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-vsm-gold/20 text-vsm-gold text-xs font-semibold inline-flex items-center gap-1.5 transition-all"
+                >
+                  <Sparkles size={12} />
+                  <span>Load Demo Client: thabo@example.com</span>
+                </button>
               </div>
             </div>
           ) : (
-            <div className="mb-5 flex items-center justify-between gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3.5 py-2 text-xs text-foreground">
-              <div className="flex items-center gap-2">
-                <ShieldCheck size={14} className="text-primary flex-shrink-0" />
-                <span>Sign in for 1-click access to all your bookings and loan contracts.</span>
-              </div>
-              <Link
-                href="/auth/login?redirect=/portal"
-                className="font-semibold text-primary hover:underline flex-shrink-0"
-              >
-                Sign In
-              </Link>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            /* Logged-In Portal Experience */
             <div>
-              <label className="block text-xs font-semibold text-foreground-muted tracking-wide uppercase mb-1.5">
-                Customer Email Address <span className="text-danger">*</span>
-              </label>
-              <div className="relative">
-                <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-foreground-muted" />
-                <input
-                  {...register('email', {
-                    required: 'Email is required',
-                    pattern: {
-                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                      message: 'Enter a valid email address',
-                    },
-                  })}
-                  type="email"
-                  className="input-luxury w-full pl-10 pr-4 py-3 text-sm"
-                  placeholder="you@email.com"
-                />
-              </div>
-              {errors.email && (
-                <p className="text-xs text-danger mt-1.5">{errors.email.message}</p>
-              )}
-            </div>
-
-            {error && (
-              <div className="flex items-start gap-2 text-sm text-danger bg-danger/10 p-3 rounded-lg border border-danger/30">
-                <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-gold w-full py-3.5 text-sm font-semibold rounded-md flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
-            >
-              {loading ? (
-                <>
-                  <Loader2 size={15} className="animate-spin" />
-                  Accessing Portal...
-                </>
-              ) : (
-                'Access My Services'
-              )}
-            </button>
-          </form>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {/* Top Bar with user info & quick actions */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-card border border-border">
-            <div>
-              <span className="text-[10px] text-foreground-muted uppercase tracking-wider block">
-                Active Customer Account
-              </span>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-foreground">{email}</span>
-                {user && user.email?.toLowerCase() === email.toLowerCase() && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-success/15 text-success border border-success/30">
-                    Verified
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={printStatement}
-                className="btn-silver px-3 py-1.5 text-xs font-semibold rounded-md flex items-center gap-1.5"
-                title="Print official customer statement"
-              >
-                <Printer size={13} />
-                Print Statement
-              </button>
-              {user ? (
-                <button
-                  onClick={async () => {
-                    await signOut();
-                    setBookings(null);
-                    setLoans(null);
-                    setEmail('');
-                    if (typeof window !== 'undefined') {
-                      sessionStorage.removeItem('vsm-portal-session');
-                    }
-                  }}
-                  className="btn-silver px-3 py-1.5 text-xs font-semibold rounded-md flex items-center gap-1.5 text-danger hover:bg-danger/10"
-                  title="Sign out of account"
-                >
-                  <LogOut size={13} />
-                  Sign Out
-                </button>
-              ) : (
-                <button
-                  onClick={() => {
-                    setBookings(null);
-                    setLoans(null);
-                    setEmail('');
-                    if (typeof window !== 'undefined') {
-                      sessionStorage.removeItem('vsm-portal-session');
-                    }
-                  }}
-                  className="text-xs text-primary hover:text-primary-light transition-colors px-2 py-1"
-                >
-                  Change Account
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Navigation Tabs */}
-          <div className="flex rounded-xl bg-muted/40 p-1 border border-border">
-            <button
-              type="button"
-              onClick={() => setActiveTab('bookings')}
-              className={`flex-1 py-2.5 px-4 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
-                activeTab === 'bookings'
-                  ? 'bg-card text-foreground shadow-sm border border-gold/40'
-                  : 'text-foreground-muted hover:text-foreground'
-              }`}
-            >
-              <Camera size={15} className={activeTab === 'bookings' ? 'text-primary' : ''} />
-              Photography Bookings
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/15 text-primary font-bold">
-                {bookings?.length || 0}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('loans')}
-              className={`flex-1 py-2.5 px-4 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
-                activeTab === 'loans'
-                  ? 'bg-card text-foreground shadow-sm border border-gold/40'
-                  : 'text-foreground-muted hover:text-foreground'
-              }`}
-            >
-              <TrendingUp size={15} className={activeTab === 'loans' ? 'text-primary' : ''} />
-              Smart Financing & Loans
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/15 text-primary font-bold">
-                {loans?.length || 0}
-              </span>
-            </button>
-          </div>
-
-          {/* TAB 1: PHOTOGRAPHY BOOKINGS */}
-          {activeTab === 'bookings' && (
-            <div className="space-y-4">
-              {bookings && bookings.length === 0 ? (
-                <div className="bg-card border border-border rounded-2xl p-8 text-center">
-                  <Camera size={32} className="text-primary/40 mx-auto mb-3" />
-                  <p className="text-sm font-semibold text-foreground mb-1">No photography bookings found</p>
-                  <p className="text-xs text-foreground-muted mb-5">
-                    Ready to capture your wedding, celebration, or corporate event?
-                  </p>
-                  <Link href="/book" className="btn-gold inline-flex px-6 py-3 text-sm font-semibold rounded-md shadow-lg">
-                    Book an Event Package
-                  </Link>
-                </div>
-              ) : (
-                bookings?.map((booking) => (
-                  <div
-                    key={booking.id}
-                    className="bg-card border border-border rounded-2xl p-6 hover:border-gold/60 transition-all duration-200 shadow-md"
+              {/* Tab Navigation */}
+              <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-8">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('bookings')}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
+                      activeTab === 'bookings'
+                        ? 'bg-vsm-gold text-near-black shadow-lg shadow-vsm-gold/20'
+                        : 'bg-white/5 text-white/60 hover:text-white'
+                    }`}
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-bold text-primary uppercase tracking-wider">
-                            {booking.eventType}
-                          </span>
-                          <StatusBadge status={booking.status} />
-                          {booking.financed && (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/15 text-purple-400 border border-purple-500/30 flex items-center gap-1">
-                              <TrendingUp size={10} /> Smart Financed
+                    <Camera size={14} />
+                    <span>Visual Productions ({bookings?.length || 0})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('loans')}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
+                      activeTab === 'loans'
+                        ? 'bg-vsm-gold text-near-black shadow-lg shadow-vsm-gold/20'
+                        : 'bg-white/5 text-white/60 hover:text-white'
+                    }`}
+                  >
+                    <Coins size={14} />
+                    <span>Smart Financing ({loans?.length || 0})</span>
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => email && loadCustomerData(email)}
+                  className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-xs flex items-center gap-1.5 transition-all"
+                  title="Refresh Data"
+                >
+                  <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                  <span className="hidden sm:inline">Refresh</span>
+                </button>
+              </div>
+
+              {/* Tab 1: Visual Productions & Bookings */}
+              {activeTab === 'bookings' && (
+                <div className="space-y-8">
+                  {/* Memory Vaults Banner if Client has vaults */}
+                  {vaults && vaults.length > 0 && (
+                    <div className="p-6 rounded-3xl bg-gradient-to-r from-deep-navy to-corporate-navy border border-vsm-gold/30 shadow-2xl relative overflow-hidden">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-2xl bg-vsm-gold/20 border border-vsm-gold/40 flex items-center justify-center text-vsm-gold flex-shrink-0">
+                            <Sparkles size={22} />
+                          </div>
+                          <div>
+                            <span className="text-[10px] uppercase tracking-widest text-vsm-gold font-bold">
+                              Delivered Archive Ready
                             </span>
-                          )}
+                            <h3 className="text-xl font-bold text-white leading-tight">
+                              {vaults[0].title}
+                            </h3>
+                            <p className="text-xs text-white/60 mt-0.5">
+                              Access Code:{' '}
+                              <span className="font-mono text-vsm-gold font-bold">
+                                {vaults[0].accessCode}
+                              </span>{' '}
+                              • {vaults[0].viewCount} views • {vaults[0].downloadCount} downloads
+                            </p>
+                          </div>
                         </div>
-                        <h3 className="text-lg font-bold text-foreground">{booking.packageName}</h3>
-                        <p className="text-xs text-foreground-muted mt-0.5">
-                          Reference: <span className="font-mono text-foreground font-semibold">{booking.referenceNumber}</span> · Tracking: <span className="font-mono">{booking.trackingNumber}</span>
-                        </p>
-                      </div>
 
-                      <div className="text-left sm:text-right">
-                        <span className="text-[10px] text-foreground-muted uppercase tracking-wider block">Total Amount</span>
-                        <span className="text-lg font-bold text-gradient-gold">
-                          R {(booking.totalAmount || booking.deposit).toLocaleString()}
-                        </span>
-                        <span className="text-[11px] text-foreground-muted block mt-0.5">
-                          Payment: <strong className="text-foreground">{booking.paymentStatus}</strong>
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-muted/30 border border-border mb-4 text-xs">
-                      <div>
-                        <span className="text-[10px] text-foreground-muted uppercase block">Event Date</span>
-                        <span className="font-medium text-foreground">
-                          {formatDate(booking.eventDate)} at {booking.eventTime}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-foreground-muted uppercase block">Venue</span>
-                        <span className="font-medium text-foreground truncate block">
-                          {booking.venueName || 'To be confirmed'}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-foreground-muted uppercase block">Guests</span>
-                        <span className="font-medium text-foreground">{booking.guestCount} guests</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border/60">
-                      <div className="flex items-center gap-2">
-                        {booking.financed && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveTab('loans');
-                              // Find linked loan if available
-                              const match = loans?.find(
-                                (l) => l.linkedBookingId === booking.id || l.purpose?.includes(booking.referenceNumber)
-                              );
-                              if (match) setSelectedLoan(match);
-                            }}
-                            className="text-xs font-semibold text-primary hover:text-primary-light flex items-center gap-1"
-                          >
-                            <TrendingUp size={12} /> View Linked Loan →
-                          </button>
-                        )}
-                        {(booking.status === 'Gallery Uploaded' || booking.status === 'Delivered') && (
-                          <Link
-                            href={`/vault/${encodeURIComponent(booking.referenceNumber)}`}
-                            className="text-xs font-semibold text-gradient-gold flex items-center gap-1 hover:underline"
-                          >
-                            <Sparkles size={12} /> Open Memory Vault
-                          </Link>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-2 ml-auto">
                         <Link
-                          href={`/track/${encodeURIComponent(booking.referenceNumber)}?email=${encodeURIComponent(email)}`}
-                          className="btn-silver px-3 py-1.5 text-xs font-semibold rounded-md flex items-center gap-1"
+                          href={`/vault/${vaults[0].accessCode}`}
+                          className="btn-gold px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 self-start sm:self-auto shadow-lg"
                         >
-                          Track Event Timeline <ExternalLink size={12} />
+                          <Eye size={14} />
+                          <span>Open Memory Vault</span>
+                          <ArrowRight size={13} />
                         </Link>
                       </div>
                     </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
+                  )}
 
-          {/* TAB 2: SMART FINANCING & LOANS */}
-          {activeTab === 'loans' && (
-            <div className="space-y-4">
-              {loans && loans.length === 0 ? (
-                <div className="bg-card border border-border rounded-2xl p-8 text-center">
-                  <TrendingUp size={32} className="text-primary/40 mx-auto mb-3" />
-                  <p className="text-sm font-semibold text-foreground mb-1">No active loan applications</p>
-                  <p className="text-xs text-foreground-muted mb-5">
-                    Finance photography packages or apply for personal loans from 3 to 24 months.
-                  </p>
-                  <Link
-                    href="/loan-application-flow"
-                    className="btn-gold inline-flex px-6 py-3 text-sm font-semibold rounded-md shadow-lg"
-                  >
-                    Apply for Smart Financing
-                  </Link>
-                </div>
-              ) : (
-                loans?.map((loan) => {
-                  const progressPct = loan.totalPayable > 0
-                    ? Math.min(100, Math.round(((loan.totalPayable - loan.balance) / loan.totalPayable) * 100))
-                    : 0;
-
-                  return (
-                    <div
-                      key={loan.id}
-                      className="bg-card border border-border rounded-2xl p-6 hover:border-gold/60 transition-all duration-200 shadow-md"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs font-bold text-primary uppercase tracking-wider">
-                              {loan.loanType === 'photography' ? 'Photography Financing' : 'Personal Loan'}
-                            </span>
-                            <span
-                              className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
-                                loan.status === 'Approved' || loan.status === 'Disbursed'
-                                  ? 'bg-success/15 text-success border-success/30'
-                                  : loan.status === 'Submitted' || loan.status === 'Under Review'
-                                  ? 'bg-warning/15 text-warning border-warning/30'
-                                  : loan.status === 'Repaid'
-                                  ? 'bg-primary/20 text-primary border-gold'
-                                  : 'bg-danger/15 text-danger border-danger/30'
-                              }`}
-                            >
-                              {loan.status}
-                            </span>
-                            <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-muted text-foreground-muted">
-                              {loan.verificationStatus}
-                            </span>
-                          </div>
-                          <h3 className="text-base font-bold text-foreground">{loan.purpose}</h3>
-                          <p className="text-xs text-foreground-muted mt-0.5">
-                            Reference: <span className="font-mono text-foreground font-semibold">{loan.referenceNumber}</span>
-                            {loan.linkedBookingId && (
-                              <span className="ml-2 text-primary font-medium">· Linked to Event Booking</span>
-                            )}
-                          </p>
-                        </div>
-
-                        <div className="text-left sm:text-right">
-                          <span className="text-[10px] text-foreground-muted uppercase tracking-wider block">
-                            Outstanding Balance
-                          </span>
-                          <span className="text-xl font-bold text-gradient-gold counter-value">
-                            {formatCurrency(loan.balance)}
-                          </span>
-                          <span className="text-[11px] text-foreground-muted block mt-0.5">
-                            Instalment: <strong className="text-foreground">{formatZAR(loan.monthlyInstalment)}/mo</strong>
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Repayment Progress Bar */}
-                      <div className="mb-4">
-                        <div className="flex justify-between text-xs text-foreground-muted mb-1.5">
-                          <span>Repayment Progress</span>
-                          <span>{progressPct}% Paid</span>
-                        </div>
-                        <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                          <div
-                            className="bg-gold-gradient h-2 rounded-full transition-all duration-500"
-                            style={{ width: `${progressPct}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl bg-muted/30 border border-border mb-4 text-xs">
-                        <div>
-                          <span className="text-[10px] text-foreground-muted uppercase block">Principal</span>
-                          <span className="font-semibold text-foreground">{formatCurrency(loan.amount)}</span>
-                        </div>
-                        <div>
-                          <span className="text-[10px] text-foreground-muted uppercase block">Term</span>
-                          <span className="font-semibold text-foreground">{loan.termMonths} Months</span>
-                        </div>
-                        <div>
-                          <span className="text-[10px] text-foreground-muted uppercase block">Interest Rate</span>
-                          <span className="font-semibold text-foreground">{loan.interestRate}% p.a.</span>
-                        </div>
-                        <div>
-                          <span className="text-[10px] text-foreground-muted uppercase block">Next Due Date</span>
-                          <span className="font-semibold text-foreground">
-                            {loan.dueDate ? formatDate(loan.dueDate) : '1st of next month'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Repayment Schedule & Actions */}
-                      <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border/60">
-                        <div className="text-xs text-foreground-muted flex items-center gap-1.5">
-                          <CreditCard size={13} className="text-primary" />
-                          <span>Debit Order: <strong>{loan.bankName}</strong> (•••• {loan.accountNumber?.slice(-4) || 'Direct'})</span>
-                        </div>
-
-                        <div className="flex items-center gap-2 ml-auto">
-                          {loan.linkedBookingId && (
-                            <button
-                              type="button"
-                              onClick={() => setActiveTab('bookings')}
-                              className="btn-silver px-3 py-1.5 text-xs font-semibold rounded-md flex items-center gap-1"
-                            >
-                              <Camera size={12} /> View Event Booking
-                            </button>
-                          )}
-                        </div>
-                      </div>
+                  {/* Bookings List */}
+                  {bookings && bookings.length === 0 ? (
+                    <div className="text-center py-20 border border-dashed border-white/10 rounded-3xl bg-deep-navy/20 p-8">
+                      <Camera size={36} className="text-white/30 mx-auto mb-3" />
+                      <h3 className="text-lg font-bold text-white mb-1">No Active Event Bookings</h3>
+                      <p className="text-xs text-white/50 max-w-sm mx-auto mb-6">
+                        You do not have any active bookings recorded under this email address.
+                      </p>
+                      <Link
+                        href="/book"
+                        className="btn-gold px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider"
+                      >
+                        Book Your First Event
+                      </Link>
                     </div>
-                  );
-                })
+                  ) : (
+                    <div className="grid grid-cols-1 gap-6">
+                      {bookings?.map((booking) => {
+                        const balanceDue = Math.max(0, (booking.totalAmount || 0) - (booking.deposit || 0));
+                        return (
+                          <div
+                            key={booking.id}
+                            className="p-6 sm:p-8 rounded-3xl bg-deep-navy/40 border border-white/10 hover:border-vsm-gold/30 transition-all shadow-xl"
+                          >
+                            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-white/10">
+                              <div>
+                                <div className="flex flex-wrap items-center gap-2 mb-2">
+                                  <span className="px-3 py-1 rounded-full bg-vsm-gold/15 border border-vsm-gold/30 text-vsm-gold text-xs font-bold uppercase tracking-wider">
+                                    {booking.eventType}
+                                  </span>
+                                  <span
+                                    className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                                      booking.status === 'Gallery Uploaded' || booking.status === 'Event Completed' || (booking.status as string) === 'Delivered'
+                                        ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                                        : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                                    }`}
+                                  >
+                                    {booking.status}
+                                  </span>
+                                  <span className="text-white/40 text-xs font-mono">
+                                    Ref: {booking.referenceNumber}
+                                  </span>
+                                </div>
+                                <h3 className="text-2xl font-bold text-white">{booking.packageName}</h3>
+                              </div>
+
+                              <div className="flex items-center gap-3">
+                                <Link
+                                  href={`/track/${booking.referenceNumber}?email=${encodeURIComponent(email)}`}
+                                  className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all"
+                                >
+                                  <span>Track Milestone</span>
+                                  <ExternalLink size={12} />
+                                </Link>
+
+                                <Link
+                                  href={`/vault/VSM-8492`}
+                                  className="btn-gold px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"
+                                >
+                                  <Lock size={12} />
+                                  <span>Memory Vault</span>
+                                </Link>
+                              </div>
+                            </div>
+
+                            {/* Details Grid */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 py-6 border-b border-white/10 text-xs">
+                              <div className="flex items-start gap-3">
+                                <Calendar size={16} className="text-vsm-gold flex-shrink-0 mt-0.5" />
+                                <div>
+                                  <span className="text-white/50 block font-medium">Event Date</span>
+                                  <span className="text-white font-bold text-sm block">
+                                    {formatDate(booking.eventDate)}
+                                  </span>
+                                  <span className="text-white/40">{booking.eventTime || 'Full Day'}</span>
+                                </div>
+                              </div>
+
+                              <div className="flex items-start gap-3">
+                                <MapPin size={16} className="text-vsm-gold flex-shrink-0 mt-0.5" />
+                                <div>
+                                  <span className="text-white/50 block font-medium">Venue Location</span>
+                                  <span className="text-white font-bold text-sm block truncate max-w-[200px]">
+                                    {booking.venueName || 'Selected Venue'}
+                                  </span>
+                                  <span className="text-white/40">{booking.location}</span>
+                                </div>
+                              </div>
+
+                              <div className="flex items-start gap-3">
+                                <CreditCard size={16} className="text-vsm-gold flex-shrink-0 mt-0.5" />
+                                <div>
+                                  <span className="text-white/50 block font-medium">Financial Ledger</span>
+                                  <span className="text-white font-bold text-sm block">
+                                    Total: {formatCurrency(booking.totalAmount)}
+                                  </span>
+                                  <span className="text-vsm-gold">
+                                    Deposit Paid: {formatCurrency(booking.deposit || 0)}
+                                    {balanceDue > 0 ? ` (Balance: ${formatCurrency(balanceDue)})` : ' (Settled)'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Proof of Payment (POP) Upload Row */}
+                            <div className="pt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                              <div className="text-xs text-white/60">
+                                <span className="font-bold text-white block">EFT Payment Verification</span>
+                                <span>
+                                  {uploadSuccess === booking.id
+                                    ? 'Receipt attached. VSM admin is reviewing your payment.'
+                                    : 'Transferred via EFT? Upload your banking proof of payment for rapid approval.'}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-3">
+                                <label className="cursor-pointer px-4 py-2 rounded-full bg-deep-navy border border-vsm-gold/30 hover:border-vsm-gold text-vsm-gold text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all">
+                                  <Upload size={13} />
+                                  <span>{uploadingBookingId === booking.id ? 'Uploading...' : 'Attach Proof of Payment'}</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*,application/pdf"
+                                    className="hidden"
+                                    disabled={uploadingBookingId === booking.id}
+                                    onChange={(e) => handleFileUpload(booking.id, e)}
+                                  />
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Tab 2: Smart Financing & Loans */}
+              {activeTab === 'loans' && (
+                <div className="space-y-8">
+                  {loans && loans.length === 0 ? (
+                    <div className="text-center py-20 border border-dashed border-white/10 rounded-3xl bg-deep-navy/20 p-8">
+                      <Coins size={36} className="text-white/30 mx-auto mb-3" />
+                      <h3 className="text-lg font-bold text-white mb-1">No Active Financing Accounts</h3>
+                      <p className="text-xs text-white/50 max-w-md mx-auto mb-6 leading-relaxed">
+                        VSM provides intelligent, contextual event financing (spread over 3 to 12 months) as well as personal financial assistance.
+                      </p>
+                      <Link
+                        href="/finance"
+                        className="btn-gold px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider inline-flex items-center gap-2"
+                      >
+                        <span>Check Financing Eligibility</span>
+                        <ArrowRight size={13} />
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-6">
+                      {loans?.map((loan) => (
+                        <div
+                          key={loan.id}
+                          className="p-6 sm:p-8 rounded-3xl bg-deep-navy/40 border border-white/10 shadow-xl"
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
+                            <div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="px-3 py-1 rounded-full bg-vsm-gold/15 border border-vsm-gold/30 text-vsm-gold text-xs font-bold uppercase tracking-wider">
+                                  {loan.loanType === 'photography' ? 'Event Financing' : 'Personal Loan'}
+                                </span>
+                                <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs font-bold uppercase tracking-wider">
+                                  {loan.status}
+                                </span>
+                              </div>
+                              <h3 className="text-2xl font-bold text-white">
+                                {formatCurrency(loan.amount)}
+                              </h3>
+                              <p className="text-xs text-white/50">
+                                Ref: <span className="font-mono text-white/80">{loan.referenceNumber}</span>
+                              </p>
+                            </div>
+
+                            <div className="text-left sm:text-right">
+                              <span className="text-xs text-white/50 block">Monthly Instalment</span>
+                              <span className="text-xl font-bold text-vsm-gold">
+                                {formatCurrency(loan.monthlyInstalment)}
+                                <span className="text-xs text-white/50 font-normal"> / mo</span>
+                              </span>
+                              <span className="text-xs text-white/40 block mt-0.5">
+                                Term: {loan.termMonths} Months @ {loan.interestRate}% APR
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6 text-xs text-white/70">
+                            <div>
+                              <span className="text-white/40 block font-medium">Total Repayable</span>
+                              <span className="text-white font-bold text-sm block">
+                                {formatCurrency(loan.totalPayable)}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-white/40 block font-medium">Outstanding Balance</span>
+                              <span className="text-vsm-gold font-bold text-sm block">
+                                {formatCurrency(loan.balance || loan.totalPayable)}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-white/40 block font-medium">Settlement Schedule</span>
+                              <span className="text-white font-bold text-sm block">
+                                Monthly Debit / EFT
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}
-
-          {/* Customer Support Footer */}
-          <div className="p-4 rounded-xl bg-muted/20 border border-border text-center text-xs text-foreground-muted">
-            Need help with your booking or financing account? Contact VSM Support at{' '}
-            <a href="mailto:info@vsm.co.za" className="text-primary underline">
-              info@vsm.co.za
-            </a>{' '}
-            or call our client services desk.
-          </div>
         </div>
-      )}
-    </BookingFlowLayout>
+      </main>
+    </PublicShell>
   );
 }
 
@@ -570,15 +591,12 @@ export default function CustomerPortalPage() {
   return (
     <Suspense
       fallback={
-        <BookingFlowLayout>
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 size={32} className="animate-spin text-primary mb-4" />
-            <p className="text-sm text-foreground-muted">Loading customer portal...</p>
-          </div>
-        </BookingFlowLayout>
+        <div className="min-h-screen bg-near-black flex items-center justify-center text-white">
+          <Loader2 size={32} className="animate-spin text-vsm-gold" />
+        </div>
       }
     >
-      <CustomerPortalContent />
+      <CustomerPortalInner />
     </Suspense>
   );
 }
