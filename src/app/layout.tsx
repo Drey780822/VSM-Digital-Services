@@ -22,7 +22,12 @@ export const metadata: Metadata = {
   description:
     'VSM is the premier platform to capture, finance, manage, and preserve important moments — creating professional opportunities for creatives.',
   icons: {
-    icon: [{ url: '/assets/images/logos/vsm-symbol-gold-transparent-1024.png', type: 'image/png' }],
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.svg', sizes: 'any' },
+    ],
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
   },
 };
 
