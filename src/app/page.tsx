@@ -14,9 +14,9 @@ export default function LandingPage() {
     <main className="min-h-screen bg-near-black text-clear-white overflow-x-hidden selection:bg-vsm-gold/20 selection:text-white">
       <LandingNav />
       <HeroSection />
+      <GallerySection />
       <ServicesSection />
       <PackagesSection />
-      <GallerySection />
       <CorporateBriefSection />
       <FinancingSection />
       <CommunitySection />
