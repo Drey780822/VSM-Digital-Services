@@ -27,6 +27,9 @@ export interface CreateBookingPayload {
   phone: string;
   idNumber: string;
   eventType: EventType;
+  commercialModel?: 'hourly' | 'package' | 'quotation';
+  hours?: number;
+  mediaType?: 'photo' | 'video' | 'both';
   eventDate: string;
   eventTime: string;
   venueName: string;
@@ -35,6 +38,9 @@ export interface CreateBookingPayload {
   packageId: string;
   packageName: string;
   packagePrice: number;
+  depositAmount?: number;
+  balanceDue?: number;
+  paymentMethod?: 'eft' | 'cash' | 'yoco' | 'payfast' | 'financed';
   addons: BookingAddon[];
   notes?: string;
   financed?: boolean;

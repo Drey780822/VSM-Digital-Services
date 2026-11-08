@@ -74,6 +74,9 @@ export interface CreateBookingInput {
   phone: string;
   idNumber?: string;
   eventType: string;
+  commercialModel?: 'hourly' | 'package' | 'quotation';
+  hours?: number;
+  mediaType?: 'photo' | 'video' | 'both';
   packageId?: string;
   packageName: string;
   eventDate: string;
@@ -84,8 +87,11 @@ export interface CreateBookingInput {
   addons?: BookingAddon[];
   totalAmount: number;
   deposit?: number;
+  depositAmount?: number;
+  balanceDue?: number;
   status?: BookingStatus;
   paymentStatus?: PaymentStatus;
+  paymentMethod?: 'eft' | 'cash' | 'yoco' | 'payfast' | 'financed';
   financed?: boolean;
   financedLoanId?: string;
   notes?: string;
@@ -298,27 +304,34 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
   const isValidUUID = (str?: string) =>
     Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
 
+  const depositVal = input.depositAmount ?? input.deposit ?? Math.round(input.totalAmount * 0.5);
+  const balanceVal = input.balanceDue ?? (input.totalAmount - depositVal);
+
   const insertRow = {
-    user_id: authenticatedUserId,
     customer_id: customerId ?? null,
     customer_name: input.customerName || (authenticatedUser.user_metadata?.full_name as string) || 'Valued Client',
     email: cleanEmail,
     phone: input.phone || null,
     id_number: input.idNumber ?? null,
-    event_type: input.eventType || 'Wedding',
-    package_id: isValidUUID(input.packageId) ? input.packageId : null,
-    package_name: input.packageName || 'Custom Package',
+    event_type: input.eventType || 'Birthday',
+    commercial_model: input.commercialModel || (input.packageId ? 'package' : 'hourly'),
     event_date: input.eventDate,
     event_time: input.eventTime || '12:00',
     venue_name: input.venueName || 'Venue',
     venue_address: input.venueAddress || '',
     location: input.venueAddress || input.venueName || 'Venue',
     guest_count: input.guestCount || 0,
+    hours: input.hours || 2,
+    media_type: input.mediaType || 'both',
+    package_id: isValidUUID(input.packageId) ? input.packageId : null,
+    package_name: input.packageName || 'Custom Package',
     addons: input.addons || [],
     total_amount: input.totalAmount,
-    deposit: input.deposit ?? input.totalAmount,
+    deposit_amount: depositVal,
+    balance_due: balanceVal,
     status: input.status || 'Submitted',
     payment_status: input.paymentStatus || 'Unpaid',
+    payment_method: input.paymentMethod || (input.financed ? 'financed' : 'eft'),
     financed: Boolean(input.financed),
     reference_number: referenceNumber,
     tracking_number: trackingNumber,
@@ -329,20 +342,17 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
 
   const { data, error } = await supabase.from('bookings').insert(insertRow).select().single();
   if (error) {
-    if (error.message?.includes('user_id') && error.message?.includes('not-null constraint')) {
-      throw new Error('Please sign in before creating a booking.');
-    }
     throw new Error(`Failed to create booking: ${error.message}`);
   }
 
-  // Add initial status history entry
+  // Add initial activity log
   try {
-    await supabase.from('booking_status_history').insert({
-      booking_id: data.id,
-      from_status: null,
-      to_status: data.status,
-      notes: 'Booking created',
-      changed_by: 'customer',
+    await supabase.from('activity_logs').insert({
+      actor: cleanEmail,
+      action: 'Created Booking',
+      entity: 'bookings',
+      entity_id: data.id,
+      metadata: { reference: referenceNumber, total: input.totalAmount, deposit: depositVal },
       created_at: now,
     });
   } catch {}

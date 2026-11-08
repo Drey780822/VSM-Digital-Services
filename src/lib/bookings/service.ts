@@ -25,6 +25,7 @@ import { calculateBookingTotal } from './constants';
 export async function createBooking(payload: CreateBookingPayload): Promise<BookingRecord> {
   const isFinanced = Boolean(payload.financed || payload.paymentPreference === 'finance');
   const total = calculateBookingTotal(payload.packagePrice, payload.addons);
+  const deposit = payload.depositAmount ?? (payload.commercialModel === 'package' ? Math.round(total * 0.4) : Math.round(total * 0.5));
 
   return createBookingInternal({
     customerName: payload.fullName,
@@ -32,6 +33,9 @@ export async function createBooking(payload: CreateBookingPayload): Promise<Book
     phone: payload.phone,
     idNumber: payload.idNumber,
     eventType: payload.eventType,
+    commercialModel: payload.commercialModel || 'hourly',
+    hours: payload.hours || 2,
+    mediaType: payload.mediaType || 'both',
     packageId: payload.packageId,
     packageName: payload.packageName,
     eventDate: payload.eventDate,
@@ -41,10 +45,13 @@ export async function createBooking(payload: CreateBookingPayload): Promise<Book
     guestCount: payload.guestCount,
     addons: payload.addons,
     totalAmount: total,
-    deposit: total,
+    depositAmount: deposit,
+    deposit: deposit,
+    balanceDue: payload.balanceDue ?? (total - deposit),
     notes: payload.notes,
     financed: isFinanced,
-    paymentStatus: isFinanced ? 'Unpaid' : 'Unpaid',
+    paymentMethod: payload.paymentMethod || (isFinanced ? 'financed' : 'eft'),
+    paymentStatus: 'Unpaid',
   });
 }
 

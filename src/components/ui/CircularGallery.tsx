@@ -294,6 +294,7 @@ export default function CircularGallery({
   const fontRef = useRef(font);
   const [active, setActive] = useState(0);
   const [open, setOpen] = useState(false);
+  const [webglSupported, setWebglSupported] = useState(true);
   const list = Array.isArray(items) && items.length ? items : DEFAULT_ITEMS;
   const settings = {
     items: list,
@@ -339,17 +340,30 @@ export default function CircularGallery({
     const canvas = canvasRef.current;
     const labelLayer = labelsRef.current;
     const caption = captionRef.current;
-    const gl = canvas?.getContext('webgl2', {
-      alpha: true,
-      premultipliedAlpha: true,
-      antialias: false,
-      depth: false,
-      stencil: false
-    });
-    if (!container || !canvas || !labelLayer || !caption || !gl) return undefined;
+    let gl: WebGL2RenderingContext | null = null;
+    try {
+      gl = canvas?.getContext('webgl2', {
+        alpha: true,
+        premultipliedAlpha: true,
+        antialias: false,
+        depth: false,
+        stencil: false
+      }) as WebGL2RenderingContext | null;
+    } catch (e) {
+      console.warn('[CircularGallery] WebGL2 initialization failed:', e);
+    }
+
+    if (!container || !canvas || !labelLayer || !caption || !gl) {
+      setWebglSupported(false);
+      return undefined;
+    }
 
     const program = link(gl);
-    if (!program) return undefined;
+    if (!program) {
+      console.warn('[CircularGallery] Shader link failed, falling back to CSS view');
+      setWebglSupported(false);
+      return undefined;
+    }
     const u: any = program.uniforms;
 
     const vertices: number[] = [];
@@ -436,30 +450,78 @@ export default function CircularGallery({
       const entry: any = { texture: null, aspect: 1, ready: 0, loaded: false };
       textures.set(url, entry);
       const image = new Image();
-      image.crossOrigin = 'anonymous';
-      image.decoding = 'async';
-      image.onload = () => {
-        if (!textures.has(url)) return;
-        const texture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-        gl.generateMipmap(gl.TEXTURE_2D);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        if (anisotropy) {
-          const max = gl.getParameter(anisotropy.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
-          gl.texParameterf(gl.TEXTURE_2D, anisotropy.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, max));
+
+      // Only set crossOrigin for external URLs from a different domain.
+      // Setting crossOrigin on same-origin/relative paths without Access-Control-Allow-Origin headers causes CORS blocks.
+      const isExternal = url.startsWith('http://') || url.startsWith('https://') || url.startsWith('//');
+      if (isExternal) {
+        try {
+          const parsed = new URL(url, typeof window !== 'undefined' ? window.location.href : 'http://localhost');
+          if (typeof window !== 'undefined' && parsed.origin !== window.location.origin) {
+            image.crossOrigin = 'anonymous';
+          }
+        } catch {
+          // ignore
         }
-        entry.texture = texture;
-        entry.aspect = image.naturalWidth / Math.max(1, image.naturalHeight);
+      }
+
+      image.decoding = 'async';
+
+      const handleImageReady = () => {
+        if (!textures.has(url) || entry.loaded) return;
+        try {
+          const texture = gl.createTexture();
+          gl.bindTexture(gl.TEXTURE_2D, texture);
+          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+          gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+
+          try {
+            gl.generateMipmap(gl.TEXTURE_2D);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+          } catch {
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+          }
+
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+          if (anisotropy) {
+            const max = gl.getParameter(anisotropy.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
+            gl.texParameterf(gl.TEXTURE_2D, anisotropy.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, max || 1));
+          }
+
+          entry.texture = texture;
+          const nw = image.naturalWidth || image.width || 1;
+          const nh = image.naturalHeight || image.height || 1;
+          entry.aspect = nw / Math.max(1, nh);
+          entry.loaded = true;
+          entry.ready = 1;
+          wake();
+        } catch (err) {
+          console.warn('[CircularGallery] Error uploading texture for:', url, err);
+          entry.loaded = true;
+          entry.ready = 1;
+          wake();
+        }
+      };
+
+      image.onload = handleImageReady;
+      image.onerror = (err) => {
+        console.warn('[CircularGallery] Failed to load image asset:', url, err);
         entry.loaded = true;
+        entry.ready = 1;
         wake();
       };
+
       image.src = url;
+
+      if (image.complete && (image.naturalWidth > 0 || image.width > 0)) {
+        handleImageReady();
+      }
+
       return entry;
     };
 
@@ -802,8 +864,10 @@ export default function CircularGallery({
 
     const resize = () => {
       const s = settingsRef.current;
-      view.width = Math.max(1, container.clientWidth);
-      view.height = Math.max(1, container.clientHeight);
+      const cWidth = container.clientWidth || container.offsetWidth || 800;
+      const cHeight = container.clientHeight || container.offsetHeight || 600;
+      view.width = Math.max(320, cWidth);
+      view.height = Math.max(300, cHeight);
       view.ratio = Math.min(s.dpr || window.devicePixelRatio || 1, 2);
       canvas.width = Math.max(1, Math.round(view.width * view.ratio));
       canvas.height = Math.max(1, Math.round(view.height * view.ratio));
@@ -1011,8 +1075,13 @@ export default function CircularGallery({
         last = 0;
         wake();
       }
-    });
+    }, { rootMargin: '250px 0px' });
     intersection.observe(container);
+
+    window.addEventListener('resize', resize);
+    const t1 = setTimeout(resize, 60);
+    const t2 = setTimeout(resize, 250);
+
     container.addEventListener('pointerdown', onPointerDown);
     container.addEventListener('pointermove', onPointerMove);
     container.addEventListener('pointerup', onPointerUp);
@@ -1048,6 +1117,9 @@ export default function CircularGallery({
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(snapTimer);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener('resize', resize);
       engineRef.current = null;
       resizeObserver.disconnect();
       intersection.disconnect();
@@ -1080,6 +1152,81 @@ export default function CircularGallery({
 
   const count = list.length;
   const current = list[active % count] || list[0];
+
+  if (!webglSupported) {
+    return (
+      <div
+        className={`w-full overflow-hidden py-4 ${className}`}
+        style={style}
+        role="region"
+        aria-label="Image gallery"
+        {...rest}
+      >
+        <div className="flex gap-5 overflow-x-auto pb-6 px-4 no-scrollbar snap-x snap-mandatory">
+          {list.map((item, index) => (
+            <div
+              key={`${item.image}-${index}`}
+              onClick={() => {
+                setActive(index);
+                setOpen(true);
+                onItemClick?.(item, index);
+              }}
+              className="flex-shrink-0 w-[260px] sm:w-[320px] aspect-[0.75] relative rounded-2xl overflow-hidden border border-white/10 hover:border-vsm-gold/50 transition-all duration-300 group cursor-pointer shadow-2xl snap-center bg-corporate-navy/40"
+            >
+              <img
+                src={item.image}
+                alt={item.alt || item.text || 'VSM Moment'}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                loading="eager"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-near-black/90 via-near-black/25 to-transparent pointer-events-none" />
+              <div className="absolute bottom-0 inset-x-0 p-5 z-10 pointer-events-none">
+                <span className="inline-block px-2.5 py-0.5 rounded-full bg-vsm-gold/20 border border-vsm-gold/40 text-vsm-gold text-[10px] font-bold uppercase tracking-wider mb-2">
+                  Featured Moment
+                </span>
+                <h3 className="text-white text-base sm:text-lg font-bold font-manrope leading-snug">
+                  {item.text || 'VSM Capture'}
+                </h3>
+                {item.description && (
+                  <p className="text-white/60 text-xs mt-1 line-clamp-2">
+                    {item.description}
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {open && current && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-near-black/85 backdrop-blur-md">
+            <div className="relative max-w-xl w-full bg-deep-navy border border-vsm-gold/30 rounded-3xl p-6 shadow-2xl text-center">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 border border-white/20 text-white flex items-center justify-center hover:bg-vsm-gold hover:text-near-black transition-all"
+                aria-label="Close modal"
+              >
+                ✕
+              </button>
+              <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-5">
+                <img
+                  src={current.image}
+                  alt={current.alt || current.text || 'VSM Moment'}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">{current.text}</h3>
+              {current.description && (
+                <p className="text-white/70 text-sm leading-relaxed max-w-lg mx-auto">
+                  {current.description}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
